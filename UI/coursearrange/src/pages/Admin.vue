@@ -45,8 +45,8 @@ export default {
       radio: '1',
       // 登录表单的对象
       adminLoginForm: {
-        username: '10011',
-        password: 'aizai2015'
+        username: '',
+        password: ''
       },
       adminLoginFormRules: {
         username: [
