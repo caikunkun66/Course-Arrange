@@ -1,0 +1,109 @@
+package com.lyk.coursearrange.entity;
+
+import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.extension.activerecord.Model;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.io.Serializable;
+
+/**
+ * @author lequal
+ * @since 2020-03-13
+ */
+@TableName("tb_student")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Student extends Model<Student> {
+
+    private static final long serialVersionUID=1L;
+
+    /**
+     * 学生id
+     */
+    @TableId(value = "id", type = IdType.AUTO)
+    private Integer id;
+
+    /**
+     * 昵称，可以用于登录
+     */
+    private String username;
+
+    /**
+     * 密码
+     */
+    private String password;
+
+    /**
+     * 标识用户类型3
+     */
+    private Integer userType;
+
+    /**
+     * 所属教师ID（培训模式）
+     */
+    private Integer teacherId;
+
+    /**
+     * 总课时
+     */
+    private Integer totalHours;
+
+    /**
+     * 已上课时
+     */
+    private Integer completedHours;
+
+    /**
+     * 课程备注
+     */
+    private String courseRemark;
+
+    /**
+     * 学生备注
+     */
+    private String studentRemark;
+
+    /**
+     * 头像
+     */
+    private String avatar;
+
+    /**
+     * 签名
+     */
+    private String description;
+
+    /**
+     * 逻辑删除
+     */
+    @TableLogic
+    private Integer deleted;
+
+    /**
+     * 账号状态,0为正常，1为封禁
+     */
+    private Integer status;
+
+    /**
+     * 创建时间
+     */
+    @TableField(fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
+
+    /**
+     * 更新时间
+     */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
+
+    @Override
+    protected Serializable pkVal() {
+        return this.id;
+    }
+
+
+}

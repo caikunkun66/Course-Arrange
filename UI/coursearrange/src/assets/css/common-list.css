@@ -1,0 +1,331 @@
+/* ========== 列表组件通用样式 ========== */
+/* 这个文件包含所有列表管理组件的通用样式 */
+
+/* 头部菜单样式 */
+.header-menu {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.header-menu .el-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.header-menu .el-input .el-input__inner {
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.header-menu .el-input .el-input__inner:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.header-menu .el-input-group__append {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.header-menu .el-input-group__append .el-button {
+  height: 40px;
+  border-radius: 0 10px 10px 0;
+}
+
+.header-menu .el-select {
+  min-width: 140px;
+}
+
+.header-menu .el-select .el-input__inner {
+  height: 40px;
+  border-radius: 10px;
+}
+
+.header-menu .el-button {
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 10px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.header-menu .el-button.el-button--primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+}
+
+.header-menu .el-button.el-button--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
+}
+
+/* 表格样式 */
+.modern-table {
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.modern-table th {
+  background: #f9fafb !important;
+  color: #6b7280 !important;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 16px 0;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.modern-table td {
+  padding: 16px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.modern-table .el-table__row {
+  transition: all 0.2s ease;
+}
+
+.modern-table .el-table__row:hover {
+  background: #f9fafb !important;
+}
+
+.modern-table .el-button--danger {
+  background: #fee;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+}
+
+.modern-table .el-button--danger:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+.modern-table .el-button--primary {
+  background: #ede9fe;
+  color: #6366f1;
+  border: 1px solid #ddd6fe;
+}
+
+.modern-table .el-button--primary:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  border: none;
+}
+
+/* 对话框样式 */
+.modern-dialog .el-dialog {
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.modern-dialog .el-dialog__header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px 24px;
+  border-radius: 16px 16px 0 0;
+}
+
+.modern-dialog .el-dialog__title {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.modern-dialog .el-dialog__headerbtn {
+  top: 20px;
+  right: 24px;
+}
+
+.modern-dialog .el-dialog__close {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.modern-dialog .el-dialog__close:hover {
+  color: #f3f4f6;
+}
+
+.modern-dialog .el-dialog__body {
+  padding: 24px;
+}
+
+.modern-dialog .el-form-item {
+  margin-bottom: 22px;
+}
+
+.modern-dialog .el-form-item__label {
+  color: #374151;
+  font-weight: 600;
+  line-height: 40px;
+}
+
+.modern-dialog .el-input__inner,
+.modern-dialog .el-textarea__inner {
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.modern-dialog .el-input__inner:focus,
+.modern-dialog .el-textarea__inner:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.modern-dialog .el-dialog__footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.modern-dialog .el-dialog__footer .el-button {
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.modern-dialog .el-dialog__footer .el-button:first-child {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: none;
+}
+
+.modern-dialog .el-dialog__footer .el-button:first-child:hover {
+  background: #e5e7eb;
+}
+
+.modern-dialog .el-dialog__footer .el-button.el-button--primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+}
+
+.modern-dialog .el-dialog__footer .el-button.el-button--primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
+}
+
+/* 分页样式 */
+.footer-button {
+  margin-top: 20px;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: center;
+}
+
+.footer-button .el-pagination .el-pager li {
+  min-width: 36px;
+  height: 36px;
+  line-height: 36px;
+  border-radius: 8px;
+  margin: 0 4px;
+  transition: all 0.3s ease;
+}
+
+.footer-button .el-pagination .el-pager li:hover {
+  background: #f3f4f6;
+}
+
+.footer-button .el-pagination .el-pager li.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+}
+
+.footer-button .el-pagination button {
+  background: #ffffff;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  transition: all 0.3s ease;
+}
+
+.footer-button .el-pagination button:hover {
+  background: #f3f4f6;
+}
+
+/* 卡片样式 */
+.modern-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.modern-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.modern-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+/* 徽章样式 */
+.modern-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.modern-badge-success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.modern-badge-warning {
+  background: #fed7aa;
+  color: #92400e;
+}
+
+.modern-badge-danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.modern-badge-info {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+/* 空状态样式 */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state-text {
+  font-size: 16px;
+  color: #6b7280;
+}
+
