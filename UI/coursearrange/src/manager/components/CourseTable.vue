@@ -1,74 +1,93 @@
 <template>
   <div class="training-schedule">
-    <div class="page-header">
-      <h2>学生课程安排</h2>
-      <p class="sub-title">为学生安排个性化的上课时间</p>
-    </div>
-
-    <!-- 筛选区域 -->
-    <div class="filter-section">
-      <el-card shadow="hover">
-        <div class="filter-row">
-          <el-date-picker
-            v-model="selectedMonth"
-            type="month"
-            placeholder="选择月份"
-            value-format="yyyy-MM"
-            @change="handleMonthChange"
-            style="width: 200px;"
-          >
-          </el-date-picker>
-
-          <el-select
-            v-model="selectedStudent"
-            placeholder="选择学生（可选）"
-            filterable
-            clearable
-            @change="handleStudentChange"
-            style="width: 200px;"
-          >
-            <el-option
-              v-for="student in studentList"
-              :key="student.id"
-              :label="student.username"
-              :value="student.id"
-            >
-              <span style="float: left">{{ student.username }}</span>
-              <span style="float: right; color: #8492a6; font-size: 13px">
-                {{ student.teacherName || '未分配' }}
-              </span>
-            </el-option>
-          </el-select>
-
-          <el-button type="primary" icon="el-icon-refresh" @click="loadMonthCourses">刷新</el-button>
-          <el-button type="success" icon="el-icon-plus" @click="openAddDialog">添加课程</el-button>
-        </div>
-
-        <!-- 统计信息 -->
-        <div class="stats-card">
-          <div class="stat-item">
-            <div class="stat-label">本月课程</div>
-            <div class="stat-value">{{ monthCoursesCount }}</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-label">本月学生</div>
-            <div class="stat-value">{{ monthStudentsCount }}</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-label">总课时</div>
-            <div class="stat-value">{{ monthTotalHours.toFixed(1) }}</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-label">已完成</div>
-            <div class="stat-value" style="color: #67c23a;">{{ monthCompletedCount }}</div>
-          </div>
-        </div>
-      </el-card>
-    </div>
-
     <!-- 日历视图 -->
     <div class="calendar-section">
-      <el-card shadow="hover" v-loading="loadingCourses">
+      <el-card shadow="hover">
+        <div class="calendar-header-wrapper">
+          <!-- 左侧控制区 -->
+          <div class="calendar-controls">
+            <!-- 月份选择器 -->
+            <div class="calendar-month-selector">
+              <el-date-picker
+                v-model="selectedMonth"
+                type="month"
+                placeholder="选择月份"
+                value-format="yyyy-MM"
+                @change="handleMonthChange"
+                size="small"
+                prefix-icon="el-icon-date"
+              >
+              </el-date-picker>
+              <span class="month-nav">
+                <el-button 
+                  icon="el-icon-arrow-left" 
+                  size="mini" 
+                  circle
+                  @click="prevMonth"
+                  title="上个月"
+                ></el-button>
+                <el-button 
+                  icon="el-icon-arrow-right" 
+                  size="mini" 
+                  circle
+                  @click="nextMonth"
+                  title="下个月"
+                ></el-button>
+              </span>
+            </div>
+            
+            <!-- 学生选择器 -->
+            <div class="student-selector">
+              <el-select
+                v-model="selectedStudent"
+                placeholder="全部学生"
+                filterable
+                clearable
+                @change="handleStudentChange"
+                size="small"
+              >
+                <el-option
+                  v-for="student in studentList"
+                  :key="student.id"
+                  :label="student.username"
+                  :value="student.id"
+                >
+                  <span style="float: left">{{ student.username }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">
+                    {{ student.teacherName || '未分配' }}
+                  </span>
+                </el-option>
+              </el-select>
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="action-buttons">
+              <el-button type="primary" icon="el-icon-refresh" size="small" @click="handleReset" circle title="重置"></el-button>
+              <el-button type="success" icon="el-icon-plus" size="small" @click="openAddDialog" circle title="添加课程"></el-button>
+            </div>
+          </div>
+          
+          <!-- 统计信息 -->
+          <div class="stats-card">
+            <div class="stat-item">
+              <div class="stat-label">本月课程</div>
+              <div class="stat-value">{{ monthCoursesCount }}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">本月学生</div>
+              <div class="stat-value">{{ monthStudentsCount }}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">总课时</div>
+              <div class="stat-value">{{ Math.round(monthTotalHours) }}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">已完成</div>
+              <div class="stat-value completed-count">{{ monthCompletedCount }}</div>
+            </div>
+          </div>
+        </div>
+        
         <el-calendar v-model="calendarValue">
           <template slot="dateCell" slot-scope="{date, data}">
             <div class="calendar-day">
@@ -90,7 +109,7 @@
                   class="course-item"
                   :class="'status-' + getCourseStatus(course)"
                   @click="showCourseDetail(course)"
-                  :title="`${course.startTime}-${course.endTime} ${getStudentName(course.studentId)} (${course.courseName})`"
+                  :title="getCourseTooltip(course)"
                 >
                   <span class="course-time">{{ course.startTime }}-{{ course.endTime }}</span>
                   <span class="course-student">{{ getStudentName(course.studentId) }}</span>
@@ -227,32 +246,49 @@
           </el-date-picker>
         </el-form-item>
 
-        <el-form-item label="上课时间" required>
-          <el-col :span="11">
-            <el-form-item prop="startTime">
-              <el-time-picker
-                v-model="courseForm.startTime"
-                placeholder="开始时间"
-                value-format="HH:mm"
-                format="HH:mm"
-                style="width: 100%;"
-              >
-              </el-time-picker>
-            </el-form-item>
-          </el-col>
-          <el-col :span="2" style="text-align: center;">-</el-col>
-          <el-col :span="11">
-            <el-form-item prop="endTime">
-              <el-time-picker
-                v-model="courseForm.endTime"
-                placeholder="结束时间"
-                value-format="HH:mm"
-                format="HH:mm"
-                style="width: 100%;"
-              >
-              </el-time-picker>
-            </el-form-item>
-          </el-col>
+        <el-form-item label="开始时间" prop="startTime">
+          <el-time-picker
+            v-model="courseForm.startTime"
+            placeholder="选择开始时间"
+            value-format="HH:mm"
+            format="HH:mm"
+            style="width: 100%;"
+            @change="calculateEndTime"
+          >
+          </el-time-picker>
+        </el-form-item>
+
+        <el-form-item label="课时数" prop="duration">
+          <el-input-number
+            v-model="courseForm.duration"
+            :min="0.5"
+            :max="10"
+            :step="0.5"
+            :precision="1"
+            style="width: 100%;"
+            @change="calculateEndTime"
+          ></el-input-number>
+          <span style="color: #909399; font-size: 12px; margin-left: 10px;">
+            （每节课{{ selectedStudentDuration }}分钟）
+          </span>
+        </el-form-item>
+
+        <el-form-item label="结束时间">
+          <el-input
+            v-model="courseForm.endTime"
+            placeholder="自动计算"
+            readonly
+            style="width: 100%;"
+          >
+            <template slot="prepend">
+              <i class="el-icon-time"></i>
+            </template>
+            <template slot="append" v-if="courseForm.endTime">
+              <span style="color: #67c23a;">
+                <i class="el-icon-success"></i> 共{{ totalMinutes }}分钟
+              </span>
+            </template>
+          </el-input>
         </el-form-item>
 
         <el-form-item label="授课教师" prop="teacherId">
@@ -274,18 +310,6 @@
           <span v-if="!isEdit && currentTeacher && courseForm.teacherId === currentTeacher.id" style="color: #67c23a; font-size: 12px; margin-top: 5px; display: block;">
             <i class="el-icon-success"></i> 已自动选择：{{ currentTeacher.realname }}（当前登录教师）
           </span>
-        </el-form-item>
-
-        <el-form-item label="课时数" prop="duration">
-          <el-input-number
-            v-model="courseForm.duration"
-            :min="0.5"
-            :max="10"
-            :step="0.5"
-            :precision="1"
-            style="width: 100%;"
-          ></el-input-number>
-          <span style="color: #909399; font-size: 12px; margin-left: 10px;">（每节课的课时数）</span>
         </el-form-item>
 
         <el-form-item label="备注" prop="remark">
@@ -375,9 +399,6 @@ export default {
         startTime: [
           { required: true, message: '请选择开始时间', trigger: 'change' }
         ],
-        endTime: [
-          { required: true, message: '请选择结束时间', trigger: 'change' }
-        ],
         duration: [
           { required: true, message: '请输入课时数', trigger: 'blur' }
         ]
@@ -409,6 +430,29 @@ export default {
         const endDateTime = new Date(`${course.courseDate} ${course.endTime}`);
         return now > endDateTime;
       }).length;
+    },
+    
+    // 选中学生的课程时长（分钟）
+    selectedStudentDuration() {
+      if (!this.courseForm.studentId) {
+        return 45; // 默认45分钟
+      }
+      const student = this.studentList.find(s => s.id === this.courseForm.studentId);
+      return student && student.classDuration ? student.classDuration : 45;
+    },
+    
+    // 总分钟数
+    totalMinutes() {
+      return Math.round(this.selectedStudentDuration * (this.courseForm.duration || 0));
+    }
+  },
+  
+  watch: {
+    // 监听学生选择变化，重新计算结束时间
+    'courseForm.studentId'(newVal) {
+      if (newVal) {
+        this.calculateEndTime();
+      }
     }
   },
   
@@ -421,6 +465,37 @@ export default {
   },
   
   methods: {
+    // 计算结束时间
+    calculateEndTime() {
+      if (!this.courseForm.startTime || !this.courseForm.duration) {
+        this.courseForm.endTime = '';
+        return;
+      }
+      
+      try {
+        // 解析开始时间
+        const [hours, minutes] = this.courseForm.startTime.split(':').map(Number);
+        
+        // 计算总分钟数
+        const totalMinutes = this.selectedStudentDuration * this.courseForm.duration;
+        
+        // 创建日期对象（使用任意日期，只关心时间）
+        const startDate = new Date(2000, 0, 1, hours, minutes);
+        
+        // 添加分钟数
+        const endDate = new Date(startDate.getTime() + totalMinutes * 60000);
+        
+        // 格式化结束时间
+        const endHours = String(endDate.getHours()).padStart(2, '0');
+        const endMinutes = String(endDate.getMinutes()).padStart(2, '0');
+        
+        this.courseForm.endTime = `${endHours}:${endMinutes}`;
+      } catch (error) {
+        console.error('计算结束时间失败:', error);
+        this.courseForm.endTime = '';
+      }
+    },
+    
     // 初始化当前月份
     initSelectedMonth() {
       const now = new Date();
@@ -439,9 +514,9 @@ export default {
     
     // 加载初始数据
     async loadInitialData() {
-      await this.loadStudents();
+      await this.loadTeachers(); // 先加载教师列表
+      await this.loadStudents(); // 再加载学生列表并匹配教师名称
       await this.loadCourseInfo();
-      await this.loadTeachers();
     },
     
     // 加载学生列表
@@ -458,11 +533,27 @@ export default {
         const res = await this.$axios.get(url);
         if (res.data.code === 0) {
           this.studentList = res.data.data.records || res.data.data || [];
+          // 丰富学生数据，添加教师名称
+          this.enrichStudentData();
         }
       } catch (error) {
         this.$message.error('加载学生列表失败');
         console.error(error);
       }
+    },
+    
+    // 丰富学生数据（添加教师名称）
+    enrichStudentData() {
+      this.studentList = this.studentList.map(student => {
+        // 根据 teacherId 查找教师名称
+        if (student.teacherId && this.teacherList.length > 0) {
+          const teacher = this.teacherList.find(t => t.id === student.teacherId);
+          student.teacherName = teacher ? teacher.realname : '未分配';
+        } else {
+          student.teacherName = '未分配';
+        }
+        return student;
+      });
     },
     
     // 加载课程信息
@@ -500,8 +591,42 @@ export default {
       }
     },
     
+    // 上个月
+    prevMonth() {
+      const [year, month] = this.selectedMonth.split('-');
+      const date = new Date(year, month - 1, 1);
+      date.setMonth(date.getMonth() - 1);
+      const newYear = date.getFullYear();
+      const newMonth = String(date.getMonth() + 1).padStart(2, '0');
+      this.selectedMonth = `${newYear}-${newMonth}`;
+      this.handleMonthChange();
+    },
+    
+    // 下个月
+    nextMonth() {
+      const [year, month] = this.selectedMonth.split('-');
+      const date = new Date(year, month - 1, 1);
+      date.setMonth(date.getMonth() + 1);
+      const newYear = date.getFullYear();
+      const newMonth = String(date.getMonth() + 1).padStart(2, '0');
+      this.selectedMonth = `${newYear}-${newMonth}`;
+      this.handleMonthChange();
+    },
+    
     // 学生选择变化
     handleStudentChange() {
+      this.loadMonthCourses();
+    },
+    
+    // 重置搜索条件
+    handleReset() {
+      // 清空选中的学生
+      this.selectedStudent = null;
+      // 重置月份为当前月份
+      this.initSelectedMonth();
+      // 重置日历显示
+      this.calendarValue = new Date();
+      // 重新加载课程数据
       this.loadMonthCourses();
     },
     
@@ -585,6 +710,15 @@ export default {
     isSelectedMonth(day) {
       if (!this.selectedMonth) return true;
       return day.startsWith(this.selectedMonth);
+    },
+    
+    // 获取课程悬浮提示
+    getCourseTooltip(course) {
+      let tooltip = `${course.startTime}-${course.endTime} ${this.getStudentName(course.studentId)} (${course.courseName})`;
+      if (course.remark) {
+        tooltip += `\n备注：${course.remark}`;
+      }
+      return tooltip;
     },
     
     // 获取课程状态
@@ -694,6 +828,10 @@ export default {
       this.dialogTitle = '编辑课程';
       this.courseForm = Object.assign({}, course);
       this.dialogVisible = true;
+      // 编辑时也可以重新计算结束时间
+      this.$nextTick(() => {
+        this.calculateEndTime();
+      });
     },
     
     // 删除课程
@@ -723,6 +861,12 @@ export default {
     submitCourse() {
       this.$refs.courseForm.validate(async (valid) => {
         if (valid) {
+          // 验证结束时间是否已计算
+          if (!this.courseForm.endTime) {
+            this.$message.error('请先选择开始时间和课时数');
+            return;
+          }
+          
           // 验证时间
           if (this.courseForm.startTime >= this.courseForm.endTime) {
             this.$message.error('结束时间必须晚于开始时间');
@@ -847,62 +991,209 @@ export default {
   background: #f0f2f5;
   min-height: calc(100vh - 60px);
 
-  .page-header {
+  .calendar-section {
     margin-bottom: 20px;
+    position: relative;
     
-    h2 {
-      margin: 0;
-      font-size: 24px;
-      color: #303133;
-    }
-    
-    .sub-title {
-      margin: 5px 0 0 0;
-      font-size: 14px;
-      color: #909399;
-    }
-  }
-
-  .filter-section {
-    margin-bottom: 20px;
-    
-    .filter-row {
-      display: flex;
-      gap: 15px;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-    }
-    
-    .stats-card {
-      display: flex;
-      gap: 30px;
-      padding: 20px;
-      border-top: 1px solid #ebeef5;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 4px;
+    // 日历头部包装器
+    .calendar-header-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 0;
+      z-index: 5;
+      pointer-events: none;
       
-      .stat-item {
-        flex: 1;
-        text-align: center;
+      // 左侧控制区
+      .calendar-controls {
+        position: absolute;
+        top: 10px;
+        left: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        pointer-events: auto;
+      }
+      
+      // 月份选择器
+      .calendar-month-selector {
+        display: flex;
+        align-items: center;
+        gap: 12px;
         
-        .stat-label {
-          font-size: 14px;
-          color: rgba(255, 255, 255, 0.8);
-          margin-bottom: 8px;
+        /deep/ .el-date-editor {
+          width: 280px;
+          
+          .el-input__inner {
+            border: 2px solid #dcdfe6;
+            background: #ffffff;
+            font-size: 20px;
+            font-weight: 600;
+            color: #303133;
+            padding-left: 45px;
+            padding-right: 15px;
+            height: 50px;
+            line-height: 50px;
+            cursor: pointer;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            
+            &:hover {
+              border-color: #409eff;
+              box-shadow: 0 2px 12px rgba(64, 158, 255, 0.2);
+            }
+            
+            &:focus {
+              border-color: #409eff;
+              box-shadow: 0 2px 12px rgba(64, 158, 255, 0.3);
+            }
+          }
+          
+          .el-input__prefix {
+            left: 12px;
+            color: #409eff;
+            font-size: 20px;
+          }
+          
+          .el-input__suffix {
+            right: 12px;
+            font-size: 18px;
+          }
         }
         
-        .stat-value {
-          font-size: 28px;
-          font-weight: bold;
-          color: #ffffff;
+        .month-nav {
+          display: flex;
+          gap: 8px;
+          
+          .el-button {
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            border-width: 2px;
+            
+            i {
+              font-size: 18px;
+              font-weight: bold;
+            }
+          }
+        }
+      }
+      
+      // 学生选择器
+      .student-selector {
+        /deep/ .el-select {
+          width: 220px;
+          
+          .el-input__inner {
+            height: 38px;
+            line-height: 38px;
+            font-size: 15px;
+            border-radius: 6px;
+          }
+          
+          .el-input__suffix {
+            .el-input__icon {
+              line-height: 38px;
+            }
+          }
+        }
+      }
+      
+      // 操作按钮
+      .action-buttons {
+        display: flex;
+        gap: 8px;
+        
+        .el-button {
+          width: 38px;
+          height: 38px;
+          padding: 0;
+          
+          i {
+            font-size: 16px;
+          }
+        }
+      }
+      
+      // 统计卡片定位到日历标题右侧
+      .stats-card {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        display: flex;
+        gap: 0;
+        padding: 6px 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 6px;
+        box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+        pointer-events: auto;
+        backdrop-filter: blur(10px);
+        
+        .stat-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 0 10px;
+          border-right: 1px solid rgba(255, 255, 255, 0.25);
+          min-width: 55px;
+          width: 55px;
+          
+          &:first-child {
+            padding-left: 12px;
+          }
+          
+          &:last-child {
+            border-right: none;
+            padding-right: 12px;
+          }
+          
+          .stat-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 3px;
+            white-space: nowrap;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            text-align: center;
+            line-height: 1.2;
+          }
+          
+          .stat-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffffff;
+            line-height: 1;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+            
+            &.completed-count {
+              color: #a8ff9e;
+              text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            }
+          }
         }
       }
     }
-  }
-
-  .calendar-section {
-    margin-bottom: 20px;
+    
+    // 优化日历头部样式，为统计卡片留出空间
+    /deep/ .el-calendar__header {
+      padding: 25px 20px;
+      padding-right: 340px; // 为统计卡片留出空间（缩小后）
+      padding-left: 750px; // 为左侧控制区留出空间（时间选择器变大）
+      border-bottom: 1px solid #ebeef5;
+    }
+    
+    // 隐藏默认的日历标题和按钮
+    /deep/ .el-calendar__title {
+      display: none;
+    }
+    
+    /deep/ .el-calendar__button-group {
+      display: none;
+    }
     
     /deep/ .el-calendar-table {
       .el-calendar-day {
@@ -954,7 +1245,6 @@ export default {
         .add-course-btn {
           opacity: 0;
           visibility: hidden;
-          transition: all 0.3s;
           margin-left: auto;
           border: none;
           background: #409eff;
@@ -1009,7 +1299,6 @@ export default {
           border-radius: 2px;
           font-size: 11px;
           cursor: pointer;
-          transition: all 0.2s;
           border-left: 2px solid;
           display: flex;
           align-items: center;
@@ -1027,7 +1316,6 @@ export default {
             
             &:hover {
               background: #d9ecff;
-              transform: translateX(2px);
             }
           }
           
@@ -1041,7 +1329,6 @@ export default {
             
             &:hover {
               background: #e1f3d8;
-              transform: translateX(2px);
             }
           }
           
@@ -1056,7 +1343,6 @@ export default {
             
             &:hover {
               background: #e9e9eb;
-              transform: translateX(2px);
             }
           }
           
@@ -1127,26 +1413,231 @@ export default {
   }
 }
 
-// 响应式设计
+// 中等屏幕响应式设计
+@media screen and (max-width: 1200px) {
+  .training-schedule {
+    .calendar-section {
+      /deep/ .el-calendar__header {
+        padding-right: 280px !important; // 中等屏幕调整右侧padding
+        padding-left: 620px !important;
+      }
+      
+      .calendar-header-wrapper {
+        .calendar-controls {
+          gap: 12px;
+        }
+        
+        .calendar-month-selector {
+          gap: 8px;
+          
+          /deep/ .el-date-editor {
+            width: 220px;
+            
+            .el-input__inner {
+              font-size: 16px;
+              height: 42px;
+              line-height: 42px;
+              border-width: 2px;
+            }
+            
+            .el-input__prefix {
+              font-size: 18px;
+            }
+          }
+          
+          .month-nav {
+            gap: 6px;
+            
+            .el-button {
+              width: 40px;
+              height: 40px;
+              border-width: 2px;
+              
+              i {
+                font-size: 16px;
+              }
+            }
+          }
+        }
+        
+        .student-selector {
+          /deep/ .el-select {
+            width: 180px;
+            
+            .el-input__inner {
+              height: 34px;
+              line-height: 34px;
+              font-size: 14px;
+            }
+          }
+        }
+        
+        .action-buttons {
+          gap: 6px;
+          
+          .el-button {
+            width: 34px;
+            height: 34px;
+            
+            i {
+              font-size: 14px;
+            }
+          }
+        }
+        
+        .stats-card {
+          gap: 0;
+          padding: 5px 0;
+          
+          .stat-item {
+            padding: 0 8px;
+            min-width: 50px;
+            width: 50px;
+            
+            &:first-child {
+              padding-left: 10px;
+            }
+            
+            &:last-child {
+              padding-right: 10px;
+            }
+            
+            .stat-label {
+              font-size: 9px;
+            }
+            
+            .stat-value {
+              font-size: 14px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// 小屏幕响应式设计
 @media screen and (max-width: 768px) {
   .training-schedule {
     padding: 10px;
     
-    .filter-row {
-      flex-direction: column;
-      align-items: stretch !important;
-      
-      .el-select,
-      .el-date-picker,
-      .el-button {
-        width: 100% !important;
+    .calendar-section {
+      .calendar-header-wrapper {
+        position: relative;
+        height: auto;
+        margin-bottom: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        
+        .calendar-controls {
+          position: relative;
+          top: 0;
+          left: 0;
+          flex-direction: column;
+          gap: 10px;
+          width: 100%;
+          
+          .calendar-month-selector {
+            justify-content: center;
+            width: 100%;
+            gap: 10px;
+            
+            /deep/ .el-date-editor {
+              flex: 1;
+              max-width: 260px;
+              
+              .el-input__inner {
+                font-size: 18px;
+                text-align: center;
+                height: 46px;
+                line-height: 46px;
+                border-width: 2px;
+              }
+              
+              .el-input__prefix {
+                font-size: 18px;
+              }
+            }
+            
+            .month-nav {
+              gap: 6px;
+              
+              .el-button {
+                width: 44px;
+                height: 44px;
+                border-width: 2px;
+                
+                i {
+                  font-size: 16px;
+                }
+              }
+            }
+          }
+          
+          .student-selector {
+            width: 100%;
+            
+            /deep/ .el-select {
+              width: 100%;
+              
+              .el-input__inner {
+                height: 36px;
+                line-height: 36px;
+                font-size: 15px;
+              }
+            }
+          }
+          
+          .action-buttons {
+            justify-content: center;
+            
+            .el-button {
+              width: 36px;
+              height: 36px;
+              
+              i {
+                font-size: 15px;
+              }
+            }
+          }
+        }
+        
+        .stats-card {
+          position: relative;
+          top: 0;
+          right: 0;
+          gap: 0;
+          padding: 6px 0;
+          
+          .stat-item {
+            flex: 1;
+            padding: 0 6px;
+            min-width: auto;
+            width: auto;
+            
+            &:first-child {
+              padding-left: 10px;
+            }
+            
+            &:last-child {
+              padding-right: 10px;
+            }
+            
+            .stat-label {
+              font-size: 10px;
+            }
+            
+            .stat-value {
+              font-size: 15px;
+            }
+          }
+        }
       }
-    }
-    
-    .student-info-card {
-      flex-direction: column;
-      align-items: flex-start !important;
-      gap: 15px !important;
+      
+      /deep/ .el-calendar__header {
+        padding: 8px 10px !important;
+      }
     }
   }
 }

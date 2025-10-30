@@ -68,6 +68,11 @@ public class Student extends Model<Student> {
     private String studentRemark;
 
     /**
+     * 课程时长（分钟）
+     */
+    private Integer classDuration;
+
+    /**
      * 头像
      */
     private String avatar;

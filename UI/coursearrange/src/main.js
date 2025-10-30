@@ -16,7 +16,7 @@ import echarts from 'echarts'
 // 引入全局样式
 import './assets/css/global.css';
 import {
-  Button, Select, Form, Radio, Table, Container, Message, Pagination, Dialog, Autocomplete,
+  Button, Select, Form, Radio, RadioGroup, Table, Container, Message, Pagination, Dialog, Autocomplete,
   Submenu, Menu, MenuItem, MenuItemGroup, Input, Option, FormItem, TableColumn, Row,
   Icon, Dropdown, DropdownMenu, DropdownItem, Header, Aside, Main, Footer, Popover, Upload,
   MessageBox, Col, Cascader, Image, Link, InputNumber, Progress, Avatar, Card, DatePicker,
@@ -55,6 +55,7 @@ Vue.use(Option);
 Vue.use(Select);
 Vue.use(Form);
 Vue.use(Radio);
+Vue.use(RadioGroup);
 Vue.use(Table);
 Vue.use(Container);
 Vue.use(Pagination);

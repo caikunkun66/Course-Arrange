@@ -44,6 +44,13 @@
           </div>
         </template>
       </el-table-column>
+      <el-table-column prop="classDuration" label="课程时长" width="100" align="center">
+        <template slot-scope="scope">
+          <el-tag :type="scope.row.classDuration === 60 ? 'success' : 'primary'" size="small">
+            {{ scope.row.classDuration || 45 }}分钟
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column prop="courseRemark" label="课程备注" min-width="150" show-overflow-tooltip></el-table-column>
       <el-table-column prop="studentRemark" label="学生备注" min-width="150" show-overflow-tooltip></el-table-column>
       <el-table-column prop="createTime" label="创建时间" min-width="140"></el-table-column>
@@ -59,7 +66,7 @@
     </el-table>
 
     <!-- 弹出表单编辑学生 -->
-    <el-dialog title="编辑学生" :visible.sync="visibleForm" width="600px">
+    <el-dialog title="编辑学生" :visible.sync="visibleForm" width="600px" :close-on-click-modal="false">
       <el-form
         :model="editFormData"
         label-position="left"
@@ -106,6 +113,12 @@
             {{ (editFormData.totalHours || 0) - (editFormData.completedHours || 0) }} 课时
           </span>
         </el-form-item>
+        <el-form-item label="课程时长" prop="classDuration">
+          <el-radio-group v-model="editFormData.classDuration">
+            <el-radio :label="45">45分钟</el-radio>
+            <el-radio :label="60">60分钟</el-radio>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="课程备注" prop="courseRemark">
           <el-input v-model="editFormData.courseRemark" type="textarea" :rows="3" placeholder="请输入课程备注" maxlength="500" show-word-limit></el-input>
         </el-form-item>
@@ -120,7 +133,7 @@
     </el-dialog>
 
     <!-- 添加学生对话框 -->
-    <el-dialog title="添加学生" :visible.sync="visibleAddForm" width="600px">
+    <el-dialog title="添加学生" :visible.sync="visibleAddForm" width="600px" :close-on-click-modal="false">
       <el-form
         :model="addFormData"
         label-position="left"
@@ -171,6 +184,12 @@
             {{ (addFormData.totalHours || 0) - (addFormData.completedHours || 0) }} 课时
           </span>
         </el-form-item>
+        <el-form-item label="课程时长" prop="classDuration">
+          <el-radio-group v-model="addFormData.classDuration">
+            <el-radio :label="45">45分钟</el-radio>
+            <el-radio :label="60">60分钟</el-radio>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="课程备注" prop="courseRemark">
           <el-input v-model="addFormData.courseRemark" type="textarea" :rows="3" placeholder="请输入课程备注（选填）" maxlength="500" show-word-limit></el-input>
         </el-form-item>
@@ -212,6 +231,7 @@ export default {
         avatar: '',
         totalHours: 0,
         completedHours: 0,
+        classDuration: 45,
         courseRemark: '',
         studentRemark: ''
       },
@@ -352,6 +372,7 @@ export default {
         avatar: '',
         totalHours: 0,
         completedHours: 0,
+        classDuration: 45,
         courseRemark: '',
         studentRemark: ''
       }
