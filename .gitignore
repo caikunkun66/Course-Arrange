@@ -41,3 +41,9 @@ node_modules/
 .DS_Store
 **/.DS_Store
 **/.mvn/**
+
+### Uploads ###
+uploads/*
+!uploads/README.md
+**/uploads/*
+!**/uploads/README.md

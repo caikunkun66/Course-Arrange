@@ -5,15 +5,14 @@
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.lyk.coursearrange.entity.Student">
         <id column="id" property="id" />
-        <result column="student_no" property="studentNo" />
         <result column="username" property="username" />
         <result column="password" property="password" />
-        <result column="realname" property="realname" />
-        <result column="grade" property="grade" />
-        <result column="class_no" property="classNo" />
-        <result column="age" property="age" />
-        <result column="address" property="address" />
-        <result column="telephone" property="telephone" />
+        <result column="user_type" property="userType" />
+        <result column="teacher_id" property="teacherId" />
+        <result column="total_hours" property="totalHours" />
+        <result column="completed_hours" property="completedHours" />
+        <result column="course_remark" property="courseRemark" />
+        <result column="student_remark" property="studentRemark" />
         <result column="avatar" property="avatar" />
         <result column="description" property="description" />
         <result column="deleted" property="deleted" />

@@ -2,7 +2,7 @@
   <div>
     <!-- 功能 -->
     <div class="header-menu">
-      <el-input placeholder="搜索学生" v-model="keyword" @clear="inputListener" clearable>
+      <el-input placeholder="搜索学生" v-model="keyword" @clear="inputListener" clearable style="max-width: 400px;">
         <el-button slot="append" type="primary" icon="el-icon-search" @click="searchStudent">搜索</el-button>
       </el-input>
       <!-- 管理员可以按教师筛选 -->
@@ -14,24 +14,17 @@
           :value="item.value"
         ></el-option>
       </el-select>
-      <!-- 保留原有的年级班级筛选（可选） -->
-      <el-select v-model="value1" placeholder="年级" @change="queryClass" @clear="gradeListener" clearable>
-        <el-option v-for="item in grade" :key="item.value" :label="item.label" :value="item.value"></el-option>
-      </el-select>
-      <el-select v-model="value2" placeholder="班级" @change="queryStudentByClass" @clear="classListener" clearable>
-        <el-option
-          v-for="item in classNo"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value"
-        ></el-option>
-      </el-select>
       <!-- 添加学生按钮 -->
-      <el-button type="primary" icon="el-icon-plus" @click="openAddDialog">添加学生</el-button>
+      <el-button class="add-student-btn" type="primary" icon="el-icon-plus" @click="openAddDialog">添加学生</el-button>
     </div>
     <!-- 数据显示 -->
     <el-table :data="studentData" size="mini" :stripe="true" :highlight-current-row="true" style="width: 100%">
       <el-table-column prop="id" label="ID" width="60"></el-table-column>
+      <el-table-column label="头像" width="80" align="center">
+        <template slot-scope="scope">
+          <el-avatar :size="40" :src="scope.row.avatar || defaultAvatar" fit="cover"></el-avatar>
+        </template>
+      </el-table-column>
       <el-table-column prop="username" label="昵称" min-width="100"></el-table-column>
       <el-table-column prop="teacherName" label="所属教师" min-width="100"></el-table-column>
       <el-table-column label="课时进度" min-width="200" align="center">
@@ -57,8 +50,10 @@
 
       <el-table-column prop="operation" label="操作" width="150" fixed="right">
         <template slot-scope="scope">
-          <el-button type="danger" size="mini" @click="deleteById(scope.$index, scope.row)">删除</el-button>
-          <el-button type="primary" size="mini" @click="editById(scope.$index, scope.row)">编辑</el-button>
+          <div class="operation-buttons">
+            <el-button type="primary" size="mini" @click="editById(scope.$index, scope.row)">编辑</el-button>
+            <el-button class="delete-btn" type="danger" size="mini" @click="deleteById(scope.$index, scope.row)">删除</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -71,6 +66,22 @@
         label-width="100px"
         :rules="editFormRules"
       >
+        <el-form-item label="学生头像" prop="avatar">
+          <div class="avatar-upload-container">
+            <el-upload
+              class="avatar-uploader"
+              :action="uploadUrl"
+              :show-file-list="false"
+              :on-success="handleEditAvatarSuccess"
+              :before-upload="beforeAvatarUpload"
+              :headers="uploadHeaders"
+            >
+              <img v-if="editFormData.avatar" :src="editFormData.avatar" class="avatar-preview">
+              <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+            </el-upload>
+            <div class="avatar-upload-tip">支持 jpg/png 格式，不超过2MB</div>
+          </div>
+        </el-form-item>
         <el-form-item label="昵称" prop="username">
           <el-input v-model="editFormData.username" autocomplete="off"></el-input>
         </el-form-item>
@@ -117,6 +128,22 @@
         :rules="addFormRules"
         ref="addForm"
       >
+        <el-form-item label="学生头像" prop="avatar">
+          <div class="avatar-upload-container">
+            <el-upload
+              class="avatar-uploader"
+              :action="uploadUrl"
+              :show-file-list="false"
+              :on-success="handleAddAvatarSuccess"
+              :before-upload="beforeAvatarUpload"
+              :headers="uploadHeaders"
+            >
+              <img v-if="addFormData.avatar" :src="addFormData.avatar" class="avatar-preview">
+              <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+            </el-upload>
+            <div class="avatar-upload-tip">支持 jpg/png 格式，不超过2MB</div>
+          </div>
+        </el-form-item>
         <el-form-item label="所属教师" prop="teacherId">
           <el-select v-model="addFormData.teacherId" placeholder="选择教师" clearable :disabled="!isAdmin">
             <el-option
@@ -164,7 +191,7 @@
         @current-change="handleCurrentChange"
         :current-page.sync="page"
         :page-size="pageSize"
-        layout="total, prev, pager, next"
+        layout="prev, pager, next, total"
         :total="total"
       ></el-pagination>
     </div>
@@ -182,10 +209,16 @@ export default {
         teacherId: null,
         username: '',
         password: '123456',
+        avatar: '',
         totalHours: 0,
         completedHours: 0,
         courseRemark: '',
         studentRemark: ''
+      },
+      defaultAvatar: 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png',
+      uploadUrl: 'http://localhost:8008/upload/avatar',
+      uploadHeaders: {
+        'Authorization': localStorage.getItem('token') || ''
       },
       keyword: "",
       page: 1,
@@ -257,6 +290,42 @@ export default {
 
   methods: {
     
+    // 头像上传前验证
+    beforeAvatarUpload(file) {
+      const isJPG = file.type === 'image/jpeg' || file.type === 'image/png'
+      const isLt2M = file.size / 1024 / 1024 < 2
+
+      if (!isJPG) {
+        this.$message.error('上传头像图片只能是 JPG 或 PNG 格式!')
+        return false
+      }
+      if (!isLt2M) {
+        this.$message.error('上传头像图片大小不能超过 2MB!')
+        return false
+      }
+      return true
+    },
+
+    // 编辑表单头像上传成功
+    handleEditAvatarSuccess(res, file) {
+      if (res.code === 0) {
+        this.editFormData.avatar = res.data.url
+        this.$message.success('头像上传成功')
+      } else {
+        this.$message.error(res.message || '头像上传失败')
+      }
+    },
+
+    // 添加表单头像上传成功
+    handleAddAvatarSuccess(res, file) {
+      if (res.code === 0) {
+        this.addFormData.avatar = res.data.url
+        this.$message.success('头像上传成功')
+      } else {
+        this.$message.error(res.message || '头像上传失败')
+      }
+    },
+    
     // 计算课时进度百分比
     calculateProgress(completed, total) {
       if (!total || total === 0) return 0
@@ -280,6 +349,7 @@ export default {
         teacherId: this.isAdmin ? null : this.currentTeacherId, // 教师自动填充自己的ID
         username: '',
         password: '123456',
+        avatar: '',
         totalHours: 0,
         completedHours: 0,
         courseRemark: '',
@@ -499,7 +569,19 @@ export default {
      * 根据id删除学生
      */
     deleteById(index, row) {
-      this.deleteStudentById(row.id)
+      this.$confirm(`确定要删除学生"${row.username}"吗？此操作不可恢复！`, '确认删除', {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+        confirmButtonClass: 'el-button--danger'
+      }).then(() => {
+        this.deleteStudentById(row.id)
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消删除'
+        })
+      })
     },
 
     deleteStudentById(id) {
@@ -574,7 +656,6 @@ export default {
   flex-wrap: wrap;
   
   /deep/ .el-input {
-    flex: 1;
     min-width: 200px;
     
     .el-input__inner {
@@ -582,6 +663,7 @@ export default {
       border-radius: 10px;
       border: 1px solid #e5e7eb;
       transition: all 0.3s ease;
+      padding: 0 15px;
       
       &:focus {
         border-color: #6366f1;
@@ -592,11 +674,12 @@ export default {
     .el-input-group__append {
       background: transparent;
       border: none;
-      padding: 0;
+      padding: 0 0 0 8px;
       
       .el-button {
         height: 40px;
         border-radius: 0 10px 10px 0;
+        margin: 0 20px;
       }
     }
   }
@@ -626,6 +709,10 @@ export default {
         box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
       }
     }
+  }
+  
+  .add-student-btn {
+    margin-left: auto;
   }
 }
 
@@ -657,6 +744,23 @@ export default {
     &:hover {
       background: #f9fafb !important;
       transform: scale(1.001);
+      
+      .delete-btn {
+        opacity: 1;
+        visibility: visible;
+      }
+    }
+  }
+  
+  .operation-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    
+    .delete-btn {
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
     }
   }
   
@@ -673,9 +777,10 @@ export default {
   }
   
   .el-button--primary {
-    background: #ede9fe;
-    color: #6366f1;
-    border: 1px solid #ddd6fe;
+    background: #ddd6fe;
+    color:rgb(255, 255, 255);
+    border: 1px solid #c4b5fd;
+    font-weight: 600;
     
     &:hover {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -790,6 +895,8 @@ export default {
 }
 
 .footer-button {
+  position: sticky;
+  bottom: 0;
   margin-top: 20px;
   padding: 20px;
   background: #ffffff;
@@ -797,8 +904,13 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   display: flex;
   justify-content: center;
+  z-index: 10;
   
   /deep/ .el-pagination {
+    .el-pagination__total {
+      margin-top: 4px;
+    }
+    
     .el-pager li {
       min-width: 36px;
       height: 36px;
@@ -828,6 +940,60 @@ export default {
         background: #f3f4f6;
       }
     }
+  }
+}
+
+// 头像上传样式
+.avatar-upload-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  
+  .avatar-uploader {
+    /deep/ .el-upload {
+      border: 2px dashed #d9d9d9;
+      border-radius: 12px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      width: 120px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fafafa;
+      
+      &:hover {
+        border-color: #667eea;
+        background: #f0f0ff;
+      }
+    }
+    
+    .avatar-preview {
+      width: 120px;
+      height: 120px;
+      display: block;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+    
+    .avatar-uploader-icon {
+      font-size: 32px;
+      color: #8c939d;
+      transition: color 0.3s ease;
+      
+      &:hover {
+        color: #667eea;
+      }
+    }
+  }
+  
+  .avatar-upload-tip {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #909399;
+    line-height: 1.5;
   }
 }
 </style>

@@ -19,7 +19,8 @@ import {
   Button, Select, Form, Radio, Table, Container, Message, Pagination, Dialog, Autocomplete,
   Submenu, Menu, MenuItem, MenuItemGroup, Input, Option, FormItem, TableColumn, Row,
   Icon, Dropdown, DropdownMenu, DropdownItem, Header, Aside, Main, Footer, Popover, Upload,
-  MessageBox, Col, Cascader, Image, Link, InputNumber, Progress
+  MessageBox, Col, Cascader, Image, Link, InputNumber, Progress, Avatar, Card, DatePicker,
+  TimePicker, Empty, Loading, Timeline, TimelineItem, Tag, Calendar
 } from 'element-ui';
 
 Vue.config.productionTip = false;
@@ -68,6 +69,16 @@ Vue.use(Image);
 Vue.use(Link);
 Vue.use(InputNumber);
 Vue.use(Progress);
+Vue.use(Avatar);
+Vue.use(Card);
+Vue.use(DatePicker);
+Vue.use(TimePicker);
+Vue.use(Empty);
+Vue.use(Timeline);
+Vue.use(TimelineItem);
+Vue.use(Tag);
+Vue.use(Calendar);
+Vue.use(Loading.directive);
 
 
 new Vue({

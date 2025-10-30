@@ -27,13 +27,15 @@
               <span slot="title">系统数据</span>
             </el-menu-item>
 
-            <el-submenu index="1">
-              <template slot="title">
-                <i class="el-icon-s-data"></i>排课管理
-              </template>
-              <el-menu-item index="/classtasklist" v-if="!isTeacher">课程计划</el-menu-item>
-              <el-menu-item index="/coursetable">查看课表</el-menu-item>
-            </el-submenu>
+            <el-menu-item index="/classtasklist" v-if="!isTeacher">
+              <i class="el-icon-s-order"></i>
+              <span slot="title">课程计划</span>
+            </el-menu-item>
+
+            <el-menu-item index="/coursetable">
+              <i class="el-icon-s-data"></i>
+              <span slot="title">我的课表</span>
+            </el-menu-item>
 
             <el-submenu index="2">
               <template slot="title">
@@ -79,12 +81,6 @@
               <el-menu-item index="/classroomlist">教室列表</el-menu-item>
               <el-menu-item index="/setteacharea">教学区域安排</el-menu-item>
             </el-submenu>
-            <el-submenu index="7">
-              <template slot="title">
-                <i class="el-icon-help"></i>帮助中心
-              </template>
-              <el-menu-item index="/help">使用说明</el-menu-item>
-            </el-submenu>
           </el-menu>
         </el-aside>
 
@@ -119,6 +115,9 @@ export default {
     setInterval(() => {
       this.getTime();
     }, 1000);
+    
+    // 根据当前路由设置菜单选中状态
+    this.default_active = this.$route.path;
     
     let admin = window.localStorage.getItem('admin')
     if(admin != null){
