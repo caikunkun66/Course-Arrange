@@ -37,13 +37,7 @@
               <span slot="title">我的课表</span>
             </el-menu-item>
 
-            <el-submenu index="2">
-              <template slot="title">
-                <i class="el-icon-reading"></i>课程管理
-              </template>
-              <el-menu-item index="/onlinecourse">网课列表</el-menu-item>
-              <el-menu-item index="/onlinecategory">网课类别</el-menu-item>
-            </el-submenu>
+            <!-- removed: 课程管理 submenu (网课列表/网课类别) -->
 
             <el-submenu index="3" v-if="!isTeacher">
               <template slot="title">

@@ -51,10 +51,14 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="courseRemark" label="课程备注" min-width="150" show-overflow-tooltip></el-table-column>
-      <el-table-column prop="studentRemark" label="学生备注" min-width="150" show-overflow-tooltip></el-table-column>
-      <el-table-column prop="createTime" label="创建时间" min-width="140"></el-table-column>
-
+      <el-table-column prop="courseRemark" label="课程备注" min-width="100" show-overflow-tooltip></el-table-column>
+      <el-table-column prop="studentRemark" label="学生备注" min-width="100" show-overflow-tooltip></el-table-column>
+      <!-- <el-table-column prop="createTime" label="创建时间" min-width="140"></el-table-column> -->
+      <el-table-column label="课程日志" width="110" align="center">
+        <template slot-scope="scope">
+          <el-button type="text" size="mini" @click="openLog(scope.row)">查看日志</el-button>
+        </template>
+      </el-table-column>
       <el-table-column prop="operation" label="操作" width="150" fixed="right">
         <template slot-scope="scope">
           <div class="operation-buttons">
@@ -203,6 +207,42 @@
       </div>
     </el-dialog>
 
+    <!-- 课程完成日志对话框 -->
+    <el-dialog title="课程完成日志" :visible.sync="visibleLog" width="700px" :close-on-click-modal="false">
+      <div v-if="logStudent">
+        <div style="margin-bottom: 10px; color: #606266;">
+          学生：<strong style="color:#303133;">{{ logStudent.username }}</strong>
+        </div>
+        <el-empty v-if="currentLogLines.length === 0" description="暂无日志"></el-empty>
+        <el-timeline v-else>
+          <el-timeline-item
+            v-for="(line, idx) in currentLogLines"
+            :key="idx"
+            :timestamp="extractTimestamp(line)"
+            placement="top"
+          >
+            <div class="log-item">
+              <div class="log-action">{{ parseLogLine(line).action }}</div>
+              <div class="log-meta">
+                <el-tag
+                  v-for="(f, i) in parseLogLine(line).fields"
+                  :key="i"
+                  size="mini"
+                  type="info"
+                  effect="plain"
+                >
+                  {{ f.label }}：{{ f.value }}
+                </el-tag>
+              </div>
+            </div>
+          </el-timeline-item>
+        </el-timeline>
+      </div>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="visibleLog = false">关 闭</el-button>
+      </div>
+    </el-dialog>
+
     <!-- 上一页，当前页，下一页 -->
     <div class="footer-button">
       <el-pagination
@@ -270,6 +310,9 @@ export default {
       teacherList: [],
       visibleForm: false,
       visibleAddForm: false,
+      visibleLog: false,
+      logStudent: null,
+      currentLogLines: [],
       editFormRules: {
         username: [{ required: true, message: "请输入昵称", trigger: "blur" }]
       },
@@ -584,6 +627,77 @@ export default {
         .catch(error => {
           this.$message.error("查询失败")
         });
+    },
+
+    // 打开日志查看
+    openLog(row) {
+      this.logStudent = row
+      const raw = row.completionLog || ''
+      const lines = raw.split('\n').map(v => v.trim()).filter(v => v)
+      // 最新的在上方展示
+      this.currentLogLines = lines.reverse()
+      this.visibleLog = true
+    },
+
+    // 提取时间戳 [yyyy-MM-dd HH:mm:ss]
+    extractTimestamp(line) {
+      const m = line.match(/^\[(.+?)\]/)
+      return m ? m[1] : ''
+    },
+
+    // 提取消息内容
+    extractMessage(line) {
+      return line.replace(/^\[.+?\]\s*/, '')
+    },
+
+    // 解析日志行，拆分为动作和字段数组
+    parseLogLine(line) {
+      const message = this.extractMessage(line)
+      // 优先以“>>>”后内容为基准
+      const raw = message.replace(/^>>>\s*/, '')
+
+      // 按中文顿号、逗号切分键值对
+      const parts = raw.split(/[，,]/).map(v => v.trim()).filter(Boolean)
+
+      const fields = []
+      let action = ''
+
+      parts.forEach((p, idx) => {
+        const kv = p.split('：')
+        if (kv.length >= 2) {
+          const label = kv[0].trim()
+          const value = kv.slice(1).join('：').trim()
+          if (idx === 0 && /^完成|^新增|^修改|^删除|^完成课程/.test(p)) {
+            action = p
+          } else if (label && value) {
+            fields.push({ label, value })
+          }
+        } else {
+          // 无法识别为 key：value 的，作为 action 补充
+          if (!action) action = p
+        }
+      })
+
+      // 如果没有识别出动作，取第一段作为动作
+      if (!action) action = parts[0] || raw
+
+      // 对常见字段做排序优化显示
+      const order = ['课程', '课程名', '日期', '时间', '教师', '课时', '课程ID']
+      fields.sort((a, b) => {
+        const ia = order.indexOf(a.label)
+        const ib = order.indexOf(b.label)
+        if (ia === -1 && ib === -1) return 0
+        if (ia === -1) return 1
+        if (ib === -1) return -1
+        return ia - ib
+      })
+
+      // 规范化常见字段名
+      fields.forEach(f => {
+        if (f.label === '完成课程' || f.label === '课程名') f.label = '课程'
+      })
+
+      return { action, fields }
     },
 
     /**
@@ -1016,5 +1130,23 @@ export default {
     color: #909399;
     line-height: 1.5;
   }
+}
+
+// 日志项样式
+.log-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.log-action {
+  font-weight: 600;
+  color: #303133;
+}
+
+.log-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 </style>

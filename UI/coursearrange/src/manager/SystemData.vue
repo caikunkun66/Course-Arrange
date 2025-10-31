@@ -78,7 +78,7 @@ export default {
         xAxis: [
           {
             type: "category",
-            data: ["讲师", "学生", "班级", "教室", "教学楼", "教材", "文档", "网课", "题库", "排课任务", "新增学生", "新增讲师"],
+            data: ["讲师", "学生", "文档", "网课", "题库", "新增学生", "新增讲师"],
             axisTick: {
               alignWithLabel: true,
               lineStyle: {
@@ -157,14 +157,9 @@ export default {
             data: [
               this.sysData.teachers,
               this.sysData.students,
-              this.sysData.classes,
-              this.sysData.classrooms,
-              this.sysData.teachbuilds,
-              this.sysData.courses,
               this.sysData.docs,
               this.sysData.onlineCourse,
               this.sysData.exercises,
-              this.sysData.classtasks,
               this.sysData.studentReg,
               this.sysData.teacherReg,
             ]

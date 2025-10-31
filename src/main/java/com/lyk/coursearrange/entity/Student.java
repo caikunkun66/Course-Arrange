@@ -68,6 +68,12 @@ public class Student extends Model<Student> {
     private String studentRemark;
 
     /**
+     * 课程完成操作日志
+     */
+    @TableField("completion_log")
+    private String completionLog;
+
+    /**
      * 课程时长（分钟）
      */
     private Integer classDuration;

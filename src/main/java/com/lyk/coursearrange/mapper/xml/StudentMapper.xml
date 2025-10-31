@@ -13,6 +13,7 @@
         <result column="completed_hours" property="completedHours" />
         <result column="course_remark" property="courseRemark" />
         <result column="student_remark" property="studentRemark" />
+        <result column="completion_log" property="completionLog" />
         <result column="avatar" property="avatar" />
         <result column="description" property="description" />
         <result column="deleted" property="deleted" />

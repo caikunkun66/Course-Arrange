@@ -31,6 +31,9 @@
           <el-button type="primary" @click="login">登录</el-button>
           <el-button type="info" @click="resetLoginForm">重置</el-button>
         </el-form-item>
+        <div class="register-entry">
+          <router-link class="register-link" :to="{ path: '/student/register', query: { role: 'teacher' } }">讲师注册入口</router-link>
+        </div>
       </el-form>
     </div>
   </div>
@@ -166,6 +169,20 @@ export default {
     margin-top: 15px;
     margin-right: 30px;
     justify-content: center;
+  }
+
+  .register-entry {
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  .register-link {
+    color: #409EFF;
+    text-decoration: none;
+  }
+
+  .register-link:hover {
+    text-decoration: underline;
   }
 
   .login-wrapper {

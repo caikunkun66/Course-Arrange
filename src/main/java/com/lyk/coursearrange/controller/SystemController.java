@@ -26,19 +26,9 @@ public class SystemController {
     @Autowired
     private StudentService studentService;
     @Autowired
-    private CourseInfoService courseInfoService;
-    @Autowired
-    private ClassInfoService classInfoService;
-    @Autowired
-    private ClassTaskService classTaskService;
-    @Autowired
-    private TeachbuildInfoService teachbuildInfoService;
-    @Autowired
     private DocService docService;
     @Autowired
     private ExerciseService exerciseService;
-    @Autowired
-    private ClassroomService classroomService;
     @Autowired
     private StudentDao studentDao;
     @Autowired
@@ -55,16 +45,7 @@ public class SystemController {
         int teachers = teacherService.count();
         // 学生人数
         int students = studentService.count();
-        // 教材数量
-        int courses = courseInfoService.count();
-        // 班级数量
-        int classes = classInfoService.count();
-        // 教学楼数量
-        int teachbuilds = teachbuildInfoService.count();
-        // 教室数量
-        int classrooms = classroomService.count();
-        // 当前课程任务数量
-        int classtasks = classTaskService.count();
+        // 班级、教学楼、教室、排课任务已不统计
         // 学习文档数
         int docs = docService.count();
         // 题库数量
@@ -88,13 +69,8 @@ public class SystemController {
 
         map.put("teachers", teachers);
         map.put("students", students);
-        map.put("courses", courses);
-        map.put("classes", classes);
-        map.put("teachbuilds", teachbuilds);
-        map.put("classtasks", classtasks);
         map.put("docs", docs);
         map.put("exercises", exercises);
-        map.put("classrooms", classrooms);
         map.put("studentReg", studentReg);
         map.put("onlineCourse", onlineCourse);
         map.put("teacherReg", teacherReg);

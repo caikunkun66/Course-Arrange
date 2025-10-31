@@ -70,17 +70,13 @@ public class StudentCourse extends Model<StudentCourse> {
     @TableField("teacher_name")
     private String teacherName;
 
-    /**
-     * 上课地点
-     */
-    @TableField("classroom")
-    private String classroom;
+    
 
     /**
-     * 课时数
+     * 课时数（整数）
      */
     @TableField("duration")
-    private Double duration;
+    private Integer duration;
 
     /**
      * 备注

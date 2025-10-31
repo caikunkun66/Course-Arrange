@@ -113,6 +113,18 @@
                 >
                   <span class="course-time">{{ course.startTime }}-{{ course.endTime }}</span>
                   <span class="course-student">{{ getStudentName(course.studentId) }}</span>
+                  <span class="course-actions">
+                    <el-button
+                      v-if="getCourseStatus(course) === 'pending'"
+                      type="success"
+                      size="mini"
+                      circle
+                      plain
+                      icon="el-icon-check"
+                      title="完成课程"
+                      @click.stop="markCourseComplete(course)"
+                    ></el-button>
+                  </span>
                 </div>
               </div>
             </div>
@@ -160,6 +172,11 @@
       <div slot="footer">
         <el-button @click="detailDialogVisible = false">关闭</el-button>
         <el-button type="primary" @click="editCourseFromDetail">编辑</el-button>
+        <el-button 
+          v-if="selectedCourse && getCourseStatus(selectedCourse) === 'pending'"
+          type="warning" 
+          @click="markCourseCancel(selectedCourse)"
+        >取消课程</el-button>
         <el-button type="danger" @click="deleteCourseFromDetail">删除</el-button>
       </div>
     </el-dialog>
@@ -261,10 +278,10 @@
         <el-form-item label="课时数" prop="duration">
           <el-input-number
             v-model="courseForm.duration"
-            :min="0.5"
+            :min="1"
             :max="10"
-            :step="0.5"
-            :precision="1"
+            :step="1"
+            :precision="0"
             style="width: 100%;"
             @change="calculateEndTime"
           ></el-input-number>
@@ -425,11 +442,7 @@ export default {
     
     // 已完成课程数
     monthCompletedCount() {
-      const now = new Date();
-      return this.courseList.filter(course => {
-        const endDateTime = new Date(`${course.courseDate} ${course.endTime}`);
-        return now > endDateTime;
-      }).length;
+      return this.courseList.filter(course => Number(course.status) === 2).length;
     },
     
     // 选中学生的课程时长（分钟）
@@ -558,15 +571,9 @@ export default {
     
     // 加载课程信息
     async loadCourseInfo() {
-      try {
-        const res = await this.$axios.get('/courseinfo/1?limit=1000');
-        if (res.data.code === 0) {
-          this.courseInfoList = res.data.data.records || [];
-        }
-      } catch (error) {
-        this.$message.error('加载课程列表失败');
-        console.error(error);
-      }
+      // 系统不再使用课程信息表，保持兼容返回空列表
+      this.courseInfoList = [];
+      return [];
     },
     
     // 加载教师列表
@@ -721,19 +728,22 @@ export default {
       return tooltip;
     },
     
-    // 获取课程状态
+    // 获取课程状态（优先使用后端status：0未开始 1进行中 2已完成 3已取消）
     getCourseStatus(course) {
+      if (course && course.status !== undefined && course.status !== null) {
+        switch (course.status) {
+          case 0: return 'pending';
+          case 1: return 'ongoing';
+          case 2: return 'completed';
+          case 3: return 'canceled';
+        }
+      }
       const now = new Date();
       const courseDateTime = new Date(`${course.courseDate} ${course.startTime}`);
       const endDateTime = new Date(`${course.courseDate} ${course.endTime}`);
-      
-      if (now > endDateTime) {
-        return 'completed';
-      } else if (now >= courseDateTime && now <= endDateTime) {
-        return 'ongoing';
-      } else {
-        return 'pending';
-      }
+      if (now > endDateTime) return 'completed';
+      if (now >= courseDateTime && now <= endDateTime) return 'ongoing';
+      return 'pending';
     },
     
     // 获取学生姓名
@@ -923,49 +933,31 @@ export default {
       return `${date} ${weekDay} ${time}`;
     },
     
-    // 获取状态颜色
+    // 获取状态颜色（同步course.status）
     getStatusColor(course) {
-      const now = new Date();
-      const courseDateTime = new Date(`${course.courseDate} ${course.startTime}`);
-      const endDateTime = new Date(`${course.courseDate} ${course.endTime}`);
-      
-      if (now > endDateTime) {
-        return '#909399'; // 已完成
-      } else if (now >= courseDateTime && now <= endDateTime) {
-        return '#67c23a'; // 进行中
-      } else {
-        return '#409eff'; // 未开始
-      }
+      const status = this.getCourseStatus(course);
+      if (status === 'completed') return '#67c23a'; // 已完成：绿色
+      if (status === 'ongoing') return '#67c23a';   // 进行中：绿色
+      if (status === 'canceled') return '#909399';  // 已取消：灰色
+      return '#409eff';                              // 未开始：蓝色
     },
     
-    // 获取状态标签类型
+    // 获取状态标签类型（同步course.status）
     getStatusTagType(course) {
-      const now = new Date();
-      const courseDateTime = new Date(`${course.courseDate} ${course.startTime}`);
-      const endDateTime = new Date(`${course.courseDate} ${course.endTime}`);
-      
-      if (now > endDateTime) {
-        return 'info'; // 已完成
-      } else if (now >= courseDateTime && now <= endDateTime) {
-        return 'success'; // 进行中
-      } else {
-        return ''; // 未开始
-      }
+      const status = this.getCourseStatus(course);
+      if (status === 'completed') return 'success'; // 已完成：绿色
+      if (status === 'ongoing') return 'success';   // 进行中：绿色
+      if (status === 'canceled') return 'info';     // 已取消：灰色
+      return '';                                    // 未开始：默认（蓝色）
     },
     
-    // 获取状态文本
+    // 获取状态文本（同步course.status）
     getStatusText(course) {
-      const now = new Date();
-      const courseDateTime = new Date(`${course.courseDate} ${course.startTime}`);
-      const endDateTime = new Date(`${course.courseDate} ${course.endTime}`);
-      
-      if (now > endDateTime) {
-        return '已完成';
-      } else if (now >= courseDateTime && now <= endDateTime) {
-        return '进行中';
-      } else {
-        return '未开始';
-      }
+      const status = this.getCourseStatus(course);
+      if (status === 'completed') return '已完成';
+      if (status === 'ongoing') return '进行中';
+      if (status === 'canceled') return '已取消';
+      return '未开始';
     },
     
     // 计算进度百分比
@@ -980,7 +972,67 @@ export default {
       if (percentage >= 80) return '#f56c6c';
       if (percentage >= 50) return '#e6a23c';
       return '#67c23a';
-    }
+        },
+
+        // 标记课程为完成（二次确认）
+        async markCourseComplete(course) {
+          try {
+            const studentName = this.getStudentName(course.studentId);
+            const dateText = `${course.courseDate}`;
+            const timeRangeText = `${course.startTime}-${course.endTime}`;
+            const html = `
+              <div style="line-height:1.8; font-size:14px; text-align:left;">
+                <div style="margin-bottom:6px; color:#606266;">请确认是否将当前课程打卡完成：</div>
+                <div><span style="color:#909399;">日期：</span><strong style="color:#303133;">${dateText}</strong></div>
+                <div><span style="color:#909399;">时间：</span><strong style="color:#303133;">${timeRangeText}</strong></div>
+                <div><span style="color:#909399;">学生：</span><strong style="color:#303133;">${studentName}</strong></div>
+                <div><span style="color:#909399;">课程：</span><strong style="color:#303133;">${course.courseName || '-'} </strong></div>
+              </div>`;
+            await this.$confirm(
+              html,
+              '确认操作',
+              {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning',
+                dangerouslyUseHTMLString: true,
+                center: true,
+                closeOnClickModal: false
+              }
+            );
+            const res = await this.$axios.post(`/student-course/${course.id}/complete`);
+            if (res.data && res.data.code === 0) {
+              this.$message.success('已标记为完成');
+              this.loadMonthCourses();
+            } else {
+              this.$message.error(res.data.message || '操作失败');
+            }
+          } catch (e) {
+            // 取消确认不提示错误，仅在真正请求异常时提示
+            if (e && e !== 'cancel' && e !== 'close') {
+              this.$message.error('操作失败');
+              console.error(e);
+            }
+          }
+        },
+
+        // 取消课程
+        async markCourseCancel(course) {
+          try {
+            const res = await this.$axios.post(`/student-course/${course.id}/cancel`);
+            if (res.data && res.data.code === 0) {
+              this.$message.success('已取消课程');
+              // 关闭课程详情弹窗（如果在详情中触发）
+              this.detailDialogVisible = false;
+              this.loadMonthCourses();
+            } else {
+              this.$message.error(res.data.message || '操作失败');
+            }
+          } catch (e) {
+            this.$message.error('操作失败');
+            console.error(e);
+          }
+        }
   }
 };
 </script>
@@ -1320,7 +1372,7 @@ export default {
           }
           
           &.status-ongoing {
-            background: #f0f9ff;
+            background: #f0f9eb; // 绿色系背景
             border-color: #67c23a;
             
             .course-time {
@@ -1333,12 +1385,26 @@ export default {
           }
           
           &.status-completed {
-            background: #f4f4f5;
-            border-color: #909399;
-            opacity: 0.7;
+            background: #f0f9eb; // 已完成：绿色系
+            border-color: #67c23a;
             
             .course-time {
+              color: #67c23a;
+            }
+            
+            &:hover {
+              background: #e1f3d8;
+            }
+          }
+
+          &.status-canceled {
+            background: #f4f4f5; // 已取消：灰色系
+            border-color: #909399;
+            
+            .course-time,
+            .course-student {
               color: #909399;
+              text-decoration: line-through;
             }
             
             &:hover {
@@ -1360,6 +1426,33 @@ export default {
             flex: 1;
             overflow: hidden;
             text-overflow: ellipsis;
+          }
+
+          .course-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.15s ease-in-out, visibility 0.15s ease-in-out;
+
+            /deep/ .el-button--mini {
+              padding: 0 4px;
+              font-size: 11px;
+              min-width: 22px;
+              width: 22px;
+              height: 22px;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+            }
+          }
+
+          &:hover {
+            .course-actions {
+              opacity: 1;
+              visibility: visible;
+            }
           }
         }
       }

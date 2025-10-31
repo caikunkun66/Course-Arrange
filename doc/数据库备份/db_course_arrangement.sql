@@ -320,6 +320,7 @@ CREATE TABLE `tb_student`  (
   `completed_hours` int(11) NULL DEFAULT 0 COMMENT '已上课时',
   `course_remark` varchar(500) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '课程备注',
   `student_remark` varchar(500) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '学生备注',
+  `completion_log` text CHARACTER SET utf8 COLLATE utf8_general_ci NULL COMMENT '课程完成操作日志',
   `avatar` varchar(500) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '头像',
   `description` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '签名',
   `deleted` tinyint(1) NULL DEFAULT 0 COMMENT '逻辑删除',

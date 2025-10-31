@@ -34,6 +34,16 @@ public interface StudentCourseService extends IService<StudentCourse> {
      * @return 是否成功
      */
     boolean updateCourse(StudentCourse studentCourse);
+
+    /**
+     * 标记课程为完成，并为对应学生的已上课时 +1
+     */
+    boolean completeCourse(Integer courseId);
+
+    /**
+     * 取消课程（仅更新状态为已取消）
+     */
+    boolean cancelCourse(Integer courseId);
 }
 
 

@@ -12,7 +12,6 @@
         <result column="end_time" property="endTime" />
         <result column="teacher_id" property="teacherId" />
         <result column="teacher_name" property="teacherName" />
-        <result column="classroom" property="classroom" />
         <result column="duration" property="duration" />
         <result column="remark" property="remark" />
         <result column="status" property="status" />
@@ -24,7 +23,7 @@
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         id, student_id, course_name, course_date, start_time, end_time,
-        teacher_id, teacher_name, classroom, duration, remark, status, deleted,
+        teacher_id, teacher_name, duration, remark, status, deleted,
         create_time, update_time
     </sql>
 

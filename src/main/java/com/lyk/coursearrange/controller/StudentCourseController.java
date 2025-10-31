@@ -168,6 +168,32 @@ public class StudentCourseController {
             return ServerResponse.ofError("查询课程详情失败：" + e.getMessage());
         }
     }
+
+    /**
+     * 标记课程为完成，并为学生已上课时 +1
+     */
+    @PostMapping("/{id}/complete")
+    public ServerResponse complete(@PathVariable("id") Integer id) {
+        try {
+            boolean ok = studentCourseService.completeCourse(id);
+            return ok ? ServerResponse.ofSuccess("操作成功") : ServerResponse.ofError("操作失败");
+        } catch (Exception e) {
+            return ServerResponse.ofError("完成课程失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 取消课程（仅更新状态为已取消）
+     */
+    @PostMapping("/{id}/cancel")
+    public ServerResponse cancel(@PathVariable("id") Integer id) {
+        try {
+            boolean ok = studentCourseService.cancelCourse(id);
+            return ok ? ServerResponse.ofSuccess("操作成功") : ServerResponse.ofError("操作失败");
+        } catch (Exception e) {
+            return ServerResponse.ofError("取消课程失败：" + e.getMessage());
+        }
+    }
 }
 
 
