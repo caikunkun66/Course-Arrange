@@ -35,7 +35,7 @@ export default {
     return {
       // 登录表单的对象
       studentLoginForm: {
-        username: '2020011234',
+        username: '',
         password: ''
       },
       studentLoginFormRules: {
