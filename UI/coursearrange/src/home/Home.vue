@@ -1,7 +1,7 @@
 <template>
   <div class="wrapper">
     <header class="hero">
-      <h1 class="title">Kun</h1>
+      <h1 class="title">Course-Arrange</h1>
       <p class="subtitle">高效 · 简洁 · 可靠</p>
       <div class="actions">
         <router-link to="admin/login" class="btn primary">管理员/讲师入口</router-link>

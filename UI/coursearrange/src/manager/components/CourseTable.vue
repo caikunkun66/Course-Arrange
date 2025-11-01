@@ -337,6 +337,41 @@
             placeholder="课程备注信息"
           ></el-input>
         </el-form-item>
+
+        <!-- 重复模式（仅在添加时显示） -->
+        <el-form-item v-if="!isEdit" label="重复模式">
+          <el-select
+            v-model="courseForm.repeatMode"
+            placeholder="选择重复模式"
+            style="width: 100%;"
+            @change="handleRepeatModeChange"
+          >
+            <el-option label="不重复（仅添加一次）" value="none"></el-option>
+            <el-option label="每天" value="daily"></el-option>
+            <el-option label="每周" value="weekly"></el-option>
+            <el-option label="工作日（周一至周五）" value="weekday"></el-option>
+          </el-select>
+        </el-form-item>
+
+        <!-- 重复次数（仅在选择了重复模式时显示） -->
+        <el-form-item 
+          v-if="!isEdit && courseForm.repeatMode && courseForm.repeatMode !== 'none'" 
+          label="重复次数"
+          prop="repeatCount"
+        >
+          <el-input-number
+            v-model="courseForm.repeatCount"
+            :min="1"
+            :max="100"
+            :step="1"
+            :precision="0"
+            style="width: 100%;"
+            placeholder="请输入重复次数"
+          ></el-input-number>
+          <span style="color: #909399; font-size: 12px; margin-left: 10px;">
+            （将生成{{ courseForm.repeatCount || 0 }}条课程记录）
+          </span>
+        </el-form-item>
       </el-form>
 
       <div slot="footer" class="dialog-footer">
@@ -396,7 +431,9 @@ export default {
         endTime: '',
         teacherId: null,
         duration: 1,
-        remark: ''
+        remark: '',
+        repeatMode: 'none', // 重复模式：none-不重复, daily-每天, weekly-每周, weekday-工作日
+        repeatCount: 1 // 重复次数
       },
       
       // 默认头像
@@ -418,6 +455,24 @@ export default {
         ],
         duration: [
           { required: true, message: '请输入课时数', trigger: 'blur' }
+        ],
+        repeatCount: [
+          { 
+            validator: (rule, value, callback) => {
+              if (this.courseForm.repeatMode && this.courseForm.repeatMode !== 'none') {
+                if (!value || value < 1) {
+                  callback(new Error('请输入重复次数'));
+                } else if (value > 100) {
+                  callback(new Error('重复次数不能超过100次'));
+                } else {
+                  callback();
+                }
+              } else {
+                callback();
+              }
+            },
+            trigger: 'blur'
+          }
         ]
       }
     };
@@ -674,7 +729,7 @@ export default {
                 params: { startDate, endDate }
               });
               if (res.data && res.data.code === 0 && res.data.data) {
-                allCourses.push(...res.data.data);
+                allCourses.push.apply(allCourses, res.data.data);
               }
             } catch (error) {
               console.warn(`查询学生${student.id}的课程失败`, error);
@@ -837,6 +892,9 @@ export default {
       this.isEdit = true;
       this.dialogTitle = '编辑课程';
       this.courseForm = Object.assign({}, course);
+      // 编辑模式下，重置重复相关字段（不会显示，但确保数据干净）
+      this.courseForm.repeatMode = 'none';
+      this.courseForm.repeatCount = 1;
       this.dialogVisible = true;
       // 编辑时也可以重新计算结束时间
       this.$nextTick(() => {
@@ -867,6 +925,67 @@ export default {
       }).catch(() => {});
     },
     
+    // 生成重复日期列表
+    generateRepeatDates(startDate, repeatMode, repeatCount) {
+      const dates = [];
+      const start = new Date(startDate);
+      
+      if (repeatMode === 'none') {
+        return [startDate];
+      }
+      
+      let currentDate = new Date(start);
+      let count = 0;
+      
+      while (count < repeatCount) {
+        if (repeatMode === 'daily') {
+          // 每天
+          dates.push(this.formatDate(currentDate));
+          currentDate.setDate(currentDate.getDate() + 1);
+          count++;
+        } else if (repeatMode === 'weekly') {
+          // 每周
+          dates.push(this.formatDate(currentDate));
+          currentDate.setDate(currentDate.getDate() + 7);
+          count++;
+        } else if (repeatMode === 'weekday') {
+          // 工作日（周一至周五）
+          const dayOfWeek = currentDate.getDay(); // 0=周日, 1=周一, ..., 6=周六
+          
+          // 如果当前是周末，跳到下一个周一
+          if (dayOfWeek === 0) {
+            currentDate.setDate(currentDate.getDate() + 1); // 跳到周一
+          } else if (dayOfWeek === 6) {
+            currentDate.setDate(currentDate.getDate() + 2); // 跳到周一
+          }
+          
+          dates.push(this.formatDate(currentDate));
+          // 移动到下一天
+          currentDate.setDate(currentDate.getDate() + 1);
+          
+          // 如果下一天是周末，跳过周末
+          const nextDayOfWeek = currentDate.getDay();
+          if (nextDayOfWeek === 0) {
+            currentDate.setDate(currentDate.getDate() + 1); // 跳到周一
+          } else if (nextDayOfWeek === 6) {
+            currentDate.setDate(currentDate.getDate() + 2); // 跳到周一
+          }
+          
+          count++;
+        }
+      }
+      
+      return dates;
+    },
+    
+    // 格式化日期为 yyyy-MM-dd
+    formatDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    },
+    
     // 提交课程
     submitCourse() {
       this.$refs.courseForm.validate(async (valid) => {
@@ -883,23 +1002,141 @@ export default {
             return;
           }
           
-          this.submitting = true;
-          try {
-            const url = this.isEdit ? '/student-course/update' : '/student-course/add';
-            const res = await this.$axios.post(url, this.courseForm);
-            
-            if (res.data.code === 0) {
-              this.$message.success(this.isEdit ? '修改成功' : '添加成功');
-              this.dialogVisible = false;
-              this.loadMonthCourses();
-            } else {
-              this.$message.error(res.data.message || '操作失败');
+          // 如果是编辑模式，直接提交
+          if (this.isEdit) {
+            this.submitting = true;
+            try {
+              const res = await this.$axios.post('/student-course/update', this.courseForm);
+              
+              if (res.data.code === 0) {
+                this.$message.success('修改成功');
+                this.dialogVisible = false;
+                this.loadMonthCourses();
+              } else {
+                this.$message.error(res.data.message || '操作失败');
+              }
+            } catch (error) {
+              this.$message.error('操作失败');
+              console.error(error);
+            } finally {
+              this.submitting = false;
             }
-          } catch (error) {
-            this.$message.error('操作失败');
-            console.error(error);
-          } finally {
-            this.submitting = false;
+            return;
+          }
+          
+          // 添加模式：检查是否需要批量添加
+          const repeatMode = this.courseForm.repeatMode || 'none';
+          const repeatCount = this.courseForm.repeatCount || 1;
+          
+          if (repeatMode === 'none') {
+            // 不重复，单次添加
+            this.submitting = true;
+            try {
+              const courseData = Object.assign({}, this.courseForm);
+              delete courseData.repeatMode;
+              delete courseData.repeatCount;
+              
+              const res = await this.$axios.post('/student-course/add', courseData);
+              
+              if (res.data.code === 0) {
+                this.$message.success('添加成功');
+                this.dialogVisible = false;
+                this.loadMonthCourses();
+              } else {
+                this.$message.error(res.data.message || '操作失败');
+              }
+            } catch (error) {
+              this.$message.error('操作失败');
+              console.error(error);
+            } finally {
+              this.submitting = false;
+            }
+          } else {
+            // 批量添加
+            const dates = this.generateRepeatDates(
+              this.courseForm.courseDate,
+              repeatMode,
+              repeatCount
+            );
+            
+            if (dates.length === 0) {
+              this.$message.error('未能生成有效的课程日期');
+              return;
+            }
+            
+            // 批量添加确认提示
+            try {
+              const modeText = {
+                'daily': '每天',
+                'weekly': '每周',
+                'weekday': '工作日'
+              }[repeatMode] || '重复';
+              
+              const confirmMessage = `确定要批量添加 ${dates.length} 条课程记录吗？\n\n重复模式：${modeText}\n重复次数：${repeatCount}次\n日期范围：${dates[0]} 至 ${dates[dates.length - 1]}`;
+              
+              await this.$confirm(confirmMessage, '批量添加确认', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'info'
+              });
+            } catch (e) {
+              // 用户取消
+              if (e !== 'cancel') {
+                this.$message.error('操作失败');
+              }
+              return;
+            }
+            
+            this.submitting = true;
+            let successCount = 0;
+            let failCount = 0;
+            
+            try {
+              // 批量提交课程
+              for (const date of dates) {
+                try {
+                  const courseData = {
+                    studentId: this.courseForm.studentId,
+                    courseName: this.courseForm.courseName,
+                    courseDate: date,
+                    startTime: this.courseForm.startTime,
+                    endTime: this.courseForm.endTime,
+                    teacherId: this.courseForm.teacherId,
+                    duration: this.courseForm.duration,
+                    remark: this.courseForm.remark
+                  };
+                  
+                  const res = await this.$axios.post('/student-course/add', courseData);
+                  
+                  if (res.data.code === 0) {
+                    successCount++;
+                  } else {
+                    failCount++;
+                    console.error(`添加课程失败（日期：${date}）：`, res.data.message);
+                  }
+                } catch (error) {
+                  failCount++;
+                  console.error(`添加课程失败（日期：${date}）：`, error);
+                }
+              }
+              
+              // 显示结果
+              if (successCount === dates.length) {
+                this.$message.success(`成功添加 ${successCount} 条课程记录`);
+                this.dialogVisible = false;
+                this.loadMonthCourses();
+              } else if (successCount > 0) {
+                this.$message.warning(`成功添加 ${successCount} 条，失败 ${failCount} 条`);
+                this.loadMonthCourses();
+              } else {
+                this.$message.error('所有课程添加失败，请检查后重试');
+              }
+            } catch (error) {
+              this.$message.error('批量添加失败');
+              console.error(error);
+            } finally {
+              this.submitting = false;
+            }
           }
         }
       });
@@ -916,10 +1153,21 @@ export default {
         endTime: '',
         teacherId: null,
         duration: 1,
-        remark: ''
+        remark: '',
+        repeatMode: 'none',
+        repeatCount: 1
       };
       if (this.$refs.courseForm) {
         this.$refs.courseForm.resetFields();
+      }
+    },
+    
+    // 处理重复模式变化
+    handleRepeatModeChange() {
+      if (this.courseForm.repeatMode === 'none' || !this.courseForm.repeatMode) {
+        this.courseForm.repeatCount = 1;
+      } else if (!this.courseForm.repeatCount || this.courseForm.repeatCount < 1) {
+        this.courseForm.repeatCount = 1;
       }
     },
     
