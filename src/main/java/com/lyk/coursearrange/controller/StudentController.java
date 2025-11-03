@@ -312,6 +312,34 @@ public class StudentController {
         return ServerResponse.ofError("添加学生失败");
     }
 
+    /**
+     * 学生续课 - 增加总课时
+     * @param id 学生ID
+     * @param hours 增加的课时数
+     * @return
+     */
+    @PostMapping("/renew/{id}")
+    public ServerResponse renewCourse(@PathVariable("id") Integer id, @RequestParam("hours") Double hours) {
+        if (hours == null || hours <= 0) {
+            return ServerResponse.ofError("续课课时必须大于0");
+        }
+        
+        Student student = studentService.getById(id);
+        if (student == null) {
+            return ServerResponse.ofError("学生不存在");
+        }
+        
+        // 增加总课时
+        Double currentTotal = student.getTotalHours() != null ? student.getTotalHours() : 0.0;
+        student.setTotalHours(currentTotal + hours);
+        
+        boolean b = studentService.updateById(student);
+        if (b) {
+            return ServerResponse.ofSuccess("续课成功", student);
+        }
+        return ServerResponse.ofError("续课失败");
+    }
+
 
 }
 

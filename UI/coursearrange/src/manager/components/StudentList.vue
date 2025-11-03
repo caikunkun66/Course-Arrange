@@ -59,10 +59,11 @@
           <el-button type="text" size="mini" @click="openLog(scope.row)">查看日志</el-button>
         </template>
       </el-table-column>
-      <el-table-column prop="operation" label="操作" width="150" fixed="right">
+      <el-table-column prop="operation" label="操作" width="280" fixed="right">
         <template slot-scope="scope">
           <div class="operation-buttons">
             <el-button type="primary" size="mini" @click="editById(scope.$index, scope.row)">编辑</el-button>
+            <el-button class="renew-btn" type="success" size="mini" @click="openRenewDialog(scope.row)">续课</el-button>
             <el-button class="delete-btn" type="danger" size="mini" @click="deleteById(scope.$index, scope.row)">删除</el-button>
           </div>
         </template>
@@ -243,6 +244,39 @@
       </div>
     </el-dialog>
 
+    <!-- 续课对话框 -->
+    <el-dialog title="学生续课" :visible.sync="visibleRenew" width="500px" :close-on-click-modal="false">
+      <div v-if="renewStudent">
+        <el-form :model="renewFormData" label-position="right" label-width="120px" ref="renewForm" :rules="renewFormRules">
+          <el-form-item label="学生昵称">
+            <span style="font-weight: 600; color: #303133; margin-left: 10px;">{{ renewStudent.username }}</span>
+          </el-form-item>
+          <el-form-item label="当前总课时">
+            <span style="color: #409EFF; font-size: 16px; font-weight: bold; margin-left: 10px;">
+              {{ formatHours(renewStudent.totalHours || 0) }} 课时
+            </span>
+          </el-form-item>
+          <el-form-item label="当前剩余课时">
+            <span style="color: #67C23A; font-size: 16px; font-weight: bold; margin-left: 10px;">
+              {{ formatHours((renewStudent.totalHours || 0) - (renewStudent.completedHours || 0)) }} 课时
+            </span>
+          </el-form-item>
+          <el-form-item label="增加课时" prop="hours">
+            <el-input-number v-model="renewFormData.hours" :min="0.5" :max="9999" :step="0.5" :precision="1" controls-position="right" style="width: 100px; margin-left: 10px;"></el-input-number>
+          </el-form-item>
+          <el-form-item label="续课后总课时">
+            <span style="color: #E6A23C; font-size: 18px; font-weight: bold; margin-left: 10px;">
+              {{ formatHours((renewStudent.totalHours || 0) + (renewFormData.hours || 0)) }} 课时
+            </span>
+          </el-form-item>
+        </el-form>
+      </div>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="visibleRenew = false">取 消</el-button>
+        <el-button type="primary" @click="commitRenew()">确认续课</el-button>
+      </div>
+    </el-dialog>
+
     <!-- 上一页，当前页，下一页 -->
     <div class="footer-button">
       <el-pagination
@@ -311,8 +345,13 @@ export default {
       visibleForm: false,
       visibleAddForm: false,
       visibleLog: false,
+      visibleRenew: false,
       logStudent: null,
+      renewStudent: null,
       currentLogLines: [],
+      renewFormData: {
+        hours: 0
+      },
       editFormRules: {
         username: [{ required: true, message: "请输入昵称", trigger: "blur" }]
       },
@@ -320,6 +359,12 @@ export default {
         teacherId: [{ required: true, message: "请选择所属教师", trigger: "change" }],
         username: [{ required: true, message: "请输入昵称", trigger: "blur" }],
         password: [{ required: true, message: "请输入密码", trigger: "blur" }]
+      },
+      renewFormRules: {
+        hours: [
+          { required: true, message: "请输入续课课时", trigger: "blur" },
+          { type: 'number', min: 0.5, message: "续课课时必须大于0", trigger: "blur" }
+        ]
       }
     };
   },
@@ -762,6 +807,70 @@ export default {
         });
     },
 
+    // 打开续课对话框
+    openRenewDialog(row) {
+      this.renewStudent = row
+      this.renewFormData = {
+        hours: 0
+      }
+      
+      // 如果有表单引用，重置验证
+      if (this.$refs.renewForm) {
+        this.$refs.renewForm.clearValidate()
+      }
+      
+      this.visibleRenew = true
+    },
+
+    // 提交续课
+    commitRenew() {
+      this.$refs.renewForm.validate(valid => {
+        if (valid) {
+          if (this.renewFormData.hours <= 0) {
+            this.$message.warning('续课课时必须大于0')
+            return
+          }
+          
+          this.$confirm(`确认为学生"${this.renewStudent.username}"续课 ${this.formatHours(this.renewFormData.hours)} 课时？`, '确认续课', {
+            confirmButtonText: '确认',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            this.$axios.post(`/student/renew/${this.renewStudent.id}`, null, {
+              params: {
+                hours: this.renewFormData.hours
+              }
+            })
+              .then(res => {
+                if (res.data.code === 0) {
+                  this.$message({
+                    message: `续课成功！已为"${this.renewStudent.username}"增加 ${this.formatHours(this.renewFormData.hours)} 课时`,
+                    type: 'success',
+                    duration: 3000
+                  })
+                  this.visibleRenew = false
+                  // 重新加载列表
+                  if (!this.isAdmin && this.currentTeacherId) {
+                    this.loadMyStudents()
+                  } else if (this.value3) {
+                    this.queryStudentByTeacher()
+                  } else {
+                    this.allStudent()
+                  }
+                } else {
+                  this.$message.error(res.data.message || '续课失败')
+                }
+              })
+              .catch(error => {
+                this.$message.error('续课失败，请稍后重试')
+              })
+          }).catch(() => {
+            this.$message.info('已取消续课')
+          })
+        }
+      })
+    },
+
     handleSizeChange() {},
 
     handleCurrentChange(v) {
@@ -886,7 +995,8 @@ export default {
       background: #f9fafb !important;
       transform: scale(1.001);
       
-      .delete-btn {
+      .delete-btn,
+      .renew-btn {
         opacity: 1;
         visibility: visible;
       }
@@ -897,8 +1007,10 @@ export default {
     display: flex;
     gap: 8px;
     justify-content: center;
+    flex-wrap: wrap;
     
-    .delete-btn {
+    .delete-btn,
+    .renew-btn {
       opacity: 0;
       visibility: hidden;
       transition: all 0.3s ease;
@@ -927,6 +1039,19 @@ export default {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: #ffffff;
       border: none;
+    }
+  }
+  
+  .el-button--success {
+    background: #d1fae5;
+    color: #10b981;
+    border: 1px solid #a7f3d0;
+    font-weight: 600;
+    
+    &:hover {
+      background: #10b981;
+      color: #ffffff;
+      border-color: #10b981;
     }
   }
   
