@@ -22,59 +22,15 @@
           <!-- 侧边 -->
           <!-- 默认展开的索引default-active -->
           <el-menu :default-active="default_active" @select="handleSelect" unique-opened router>
-            <el-menu-item index="/systemdata">
-              <i class="el-icon-setting"></i>
-              <span slot="title">系统数据</span>
-            </el-menu-item>
-
-            <el-menu-item index="/classtasklist" v-if="!isTeacher">
-              <i class="el-icon-s-order"></i>
-              <span slot="title">课程计划</span>
-            </el-menu-item>
-
             <el-menu-item index="/coursetable">
               <i class="el-icon-s-data"></i>
               <span slot="title">我的课表</span>
-            </el-menu-item>
-
-            <!-- removed: 课程管理 submenu (网课列表/网课类别) -->
-
-            <el-submenu index="3" v-if="!isTeacher">
-              <template slot="title">
-                <i class="el-icon-user"></i>讲师管理
-              </template>
-              <el-menu-item-group>
-                <el-menu-item index="/teacherlist">所有讲师</el-menu-item>
-              </el-menu-item-group>
-            </el-submenu>
-
-            <el-menu-item index="/classmanager" v-if="!isTeacher">
-              <i class="el-icon-plus"></i>
-              <span slot="title">添加学生</span>
             </el-menu-item>
 
             <el-menu-item index="/studentlist">
               <i class="el-icon-user"></i>
               <span slot="title">学生管理</span>
             </el-menu-item>
-
-            <el-submenu index="5">
-              <template slot="title">
-                <i class="el-icon-notebook-1"></i>教学资料
-              </template>
-              <el-menu-item index="/studydocs">学习文档</el-menu-item>
-              <el-menu-item index="/exercise">在线测试</el-menu-item>
-              <el-menu-item index="/courseinfolist">教材列表</el-menu-item>
-            </el-submenu>
-
-            <el-submenu index="6" v-if="!isTeacher">
-              <template slot="title">
-                <i class="el-icon-office-building"></i>教学设施
-              </template>
-              <el-menu-item index="/teachbuildinglist">教学楼管理</el-menu-item>
-              <el-menu-item index="/classroomlist">教室列表</el-menu-item>
-              <el-menu-item index="/setteacharea">教学区域安排</el-menu-item>
-            </el-submenu>
           </el-menu>
         </el-aside>
 
@@ -96,7 +52,7 @@ export default {
   data() {
     return {
       time: "",
-      default_active: "/systemdata",
+      default_active: "/coursetable",
       name: '用户名',
     };
   },
@@ -119,7 +75,7 @@ export default {
     } else {
       let teacher = window.localStorage.getItem('teacher')
       if (teacher != null) {
-        this.name = (JSON.parse(teacher)).realname
+        this.name = (JSON.parse(teacher)).username
       }
     }
   },

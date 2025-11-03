@@ -462,7 +462,7 @@ export default {
             let ret = res.data.data
             this.teacherList = ret.map(v => ({
               value: v.id,
-              label: v.realname
+              label: v.username
             }))
           }
         })

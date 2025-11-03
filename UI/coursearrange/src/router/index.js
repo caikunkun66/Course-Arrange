@@ -5,26 +5,12 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import Admin from '@/pages/Admin';
 import ManagerMain from '@/manager/ManagerMain';
-import TeacherList from '@/manager/components/TeacherList';
-import TeachAreaSetting from '@/manager/components/TeachAreaSetting';
-import SystemData from '@/manager/SystemData';
-import StudyDocs from '@/manager/components/StudyDocs';
-import HomeWork from '@/manager/components/HomeWork';
-import Exercise from '@/manager/components/Exercise';
-import ClassroomList from '@/manager/components/ClassroomList';
-import TeachBuildingList from '@/manager/components/TeachBuildingList';
 import CourseTable from '@/manager/components/CourseTable';
 import StudentCourseTable from '@/home/components/CourseTable';
-import EmptyClassroom from '@/home/components/EmptyClassroom';
-import StudentCenter from '@/home/components/Center';
+import StudentCenter from '@/home/components/StudentCenter';
 import StudentPassword from '@/home/components/Password';
-import CourseInfoList from '@/manager/components/CourseInfoList';
 import StudentList from '@/manager/components/StudentList';
-import ClassTaskList from '@/manager/components/ClassTaskList';
-import ClassManager from '@/manager/components/ClassManager';
 import UpdatePass from '@/pages/components/UpdatePass';
-import StudentDoc from '@/home/components/StudentDoc';
-// removed: OnlineCourse, OnlineCategory
 import StudentMain from '@/home/StudentMain';
 
 Vue.use(Router)
@@ -70,12 +56,6 @@ const router = new Router({
         noRequireAuth: true
       },
       children: [
-        
-        {
-          path: '/emptyclassroom',
-          name: 'EmptyClassroom',
-          component: EmptyClassroom
-        },
         {
           path: '',
           name: 'Student',
@@ -95,11 +75,6 @@ const router = new Router({
           path: '/password',
           name: 'Password',
           component: StudentPassword
-        },
-        {
-          path: '/studentdoc',
-          name: 'StudentDoc',
-          component: StudentDoc
         }
       ]
     },
@@ -107,6 +82,7 @@ const router = new Router({
       path: '/admin',
       name: 'Admin',
       component: ManagerMain,
+      redirect: '/coursetable',
       children: [
         {
           path: '/updatepass',
@@ -114,70 +90,14 @@ const router = new Router({
           component: UpdatePass
         },
         {
-          path: '/systemdata',
-          name: 'SystemData',
-          component: SystemData
-        },
-        {
-          path: '/teacherlist',
-          name: 'TeacherList',
-          component: TeacherList
-        },
-        {
-          path: '/studentlist',
-          name: 'StudentList',
-          component: StudentList
-        },
-        {
-          path: '/teachbuildinglist',
-          name: 'TeachBuildingList',
-          component: TeachBuildingList
-        },
-        {
-          path: '/classroomlist',
-          name: 'ClassroomList',
-          component: ClassroomList
-        },
-        {
           path: '/coursetable',
           name: 'CourseTable',
           component: CourseTable
         },
         {
-          path: '/courseinfolist',
-          name: 'CourseInfoList',
-          component: CourseInfoList
-        },
-        {
-          path: '/classtasklist',
-          name: 'ClassTaskList',
-          component: ClassTaskList
-        },
-        {
-          path: '/classmanager',
-          name: 'ClasssManager',
-          component: ClassManager
-        },
-        {
-          path: '/setteacharea',
-          name: 'TeachAreaSetting',
-          component: TeachAreaSetting
-        },
-        // removed: OnlineCourse route
-        {
-          path: '/studydocs',
-          name: 'StudyDocs',
-          component: StudyDocs
-        },
-        {
-          path: '/homework',
-          name: 'HomeWork',
-          component: HomeWork
-        },
-        {
-          path: '/exercise',
-          name: 'Exercise',
-          component: Exercise
+          path: '/studentlist',
+          name: 'StudentList',
+          component: StudentList
         }
       ]
     }

@@ -32,11 +32,6 @@ public class Teacher extends Model<Teacher> {
     private Integer id;
 
     /**
-     * 教师编号
-     */
-    private String teacherNo;
-
-    /**
      * 昵称（用户名）
      */
     private String username;
@@ -47,49 +42,14 @@ public class Teacher extends Model<Teacher> {
     private String password;
 
     /**
-     * 真实姓名
-     */
-    private String realname;
-
-    /**
      * 标识用户类型2
      */
     private Integer userType;
 
     /**
-     * 职称
-     */
-    private String jobtitle;
-
-    /**
-     * 所属年级
-     */
-    private String gradeNo;
-
-    /**
-     * 证件照(地址)
-     */
-    private String license;
-
-    /**
      * 教授科目
      */
     private String teach;
-
-    /**
-     * 年龄
-     */
-    private Integer age;
-
-    /**
-     * 联系电话
-     */
-    private String telephone;
-
-    /**
-     * 电子邮件
-     */
-    private String email;
 
     /**
      * 地址

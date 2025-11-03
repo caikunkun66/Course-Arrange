@@ -320,12 +320,12 @@
             <el-option
               v-for="teacher in teacherList"
               :key="teacher.id"
-              :label="teacher.realname"
+              :label="teacher.username"
               :value="teacher.id"
             ></el-option>
           </el-select>
           <span v-if="!isEdit && currentTeacher && courseForm.teacherId === currentTeacher.id" style="color: #67c23a; font-size: 12px; margin-top: 5px; display: block;">
-            <i class="el-icon-success"></i> 已自动选择：{{ currentTeacher.realname }}（当前登录教师）
+            <i class="el-icon-success"></i> 已自动选择：{{ currentTeacher.username }}（当前登录教师）
           </span>
         </el-form-item>
 
@@ -616,7 +616,7 @@ export default {
         // 根据 teacherId 查找教师名称
         if (student.teacherId && this.teacherList.length > 0) {
           const teacher = this.teacherList.find(t => t.id === student.teacherId);
-          student.teacherName = teacher ? teacher.realname : '未分配';
+          student.teacherName = teacher ? teacher.username : '未分配';
         } else {
           student.teacherName = '未分配';
         }

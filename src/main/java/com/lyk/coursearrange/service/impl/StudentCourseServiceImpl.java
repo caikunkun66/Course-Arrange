@@ -56,7 +56,7 @@ public class StudentCourseServiceImpl extends ServiceImpl<StudentCourseDao, Stud
             (studentCourse.getTeacherName() == null || studentCourse.getTeacherName().isEmpty())) {
             Teacher teacher = teacherService.getById(studentCourse.getTeacherId());
             if (teacher != null) {
-                studentCourse.setTeacherName(teacher.getRealname());
+                studentCourse.setTeacherName(teacher.getUsername());
             }
         }
         
@@ -74,7 +74,7 @@ public class StudentCourseServiceImpl extends ServiceImpl<StudentCourseDao, Stud
         if (studentCourse.getTeacherId() != null) {
             Teacher teacher = teacherService.getById(studentCourse.getTeacherId());
             if (teacher != null) {
-                studentCourse.setTeacherName(teacher.getRealname());
+                studentCourse.setTeacherName(teacher.getUsername());
             }
         }
         

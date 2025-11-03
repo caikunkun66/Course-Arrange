@@ -26,13 +26,7 @@ public class SystemController {
     @Autowired
     private StudentService studentService;
     @Autowired
-    private DocService docService;
-    @Autowired
-    private ExerciseService exerciseService;
-    @Autowired
     private StudentDao studentDao;
-    @Autowired
-    private  OnlineCourseService onlineCourseService;
     @Autowired
     private TeacherDao teacherDao;
 
@@ -45,13 +39,6 @@ public class SystemController {
         int teachers = teacherService.count();
         // 学生人数
         int students = studentService.count();
-        // 班级、教学楼、教室、排课任务已不统计
-        // 学习文档数
-        int docs = docService.count();
-        // 题库数量
-        int exercises = exerciseService.count();
-        // 网课数量
-        int onlineCourse = onlineCourseService.count();
 
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE,-1);
@@ -59,7 +46,6 @@ public class SystemController {
         SimpleDateFormat sp = new SimpleDateFormat("yyyy-MM-dd");
         //获取昨天日期
         String yesday = sp.format(d);
-//        String yesday = "2020-03-26";
 
         // 昨日学生注册人数
         int studentReg = studentDao.studentReg(yesday);
@@ -69,10 +55,7 @@ public class SystemController {
 
         map.put("teachers", teachers);
         map.put("students", students);
-        map.put("docs", docs);
-        map.put("exercises", exercises);
         map.put("studentReg", studentReg);
-        map.put("onlineCourse", onlineCourse);
         map.put("teacherReg", teacherReg);
 
         return ServerResponse.ofSuccess(map);

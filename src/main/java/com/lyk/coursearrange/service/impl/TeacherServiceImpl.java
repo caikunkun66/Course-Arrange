@@ -21,7 +21,7 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherDao, Teacher> impleme
     @Override
     public Teacher teacherLogin(String username, String password) {
         QueryWrapper<Teacher> wrapper = new QueryWrapper();
-        wrapper.eq("teacher_no", username);
+        wrapper.eq("username", username);
         wrapper.eq("password", password);
         return teacherDao.selectOne(wrapper);
     }

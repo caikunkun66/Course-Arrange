@@ -40,24 +40,6 @@ public class TeacherController {
     private StudentService studentService;
 
 
-    /**
-     * 上传讲师证件
-     * @param id
-     * @param file
-     * @return
-     */
-    @PostMapping("/upload/{id}")
-    public ServerResponse uploadLicense(@PathVariable("id") Integer id, MultipartFile file) {
-        Map<String, Object> map = AliyunUtil.upload(file, "license");
-        String license = (String) map.get("url");
-        Teacher t = teacherService.getById(id);
-        t.setLicense(license);
-        boolean b = teacherService.updateById(t);
-        if (b) {
-            return ServerResponse.ofSuccess("上传证件成功");
-        }
-        return ServerResponse.ofError("上传证件失败");
-    }
 
 
 
@@ -71,7 +53,7 @@ public class TeacherController {
     public ServerResponse teacherLogin(@RequestBody UserLoginRequest userLoginRequest) {
         Map<String, Object> map = new HashMap<>();
         QueryWrapper<Teacher> wrapper = new QueryWrapper<>();
-        wrapper.eq("teacher_no", userLoginRequest.getUsername());
+        wrapper.eq("username", userLoginRequest.getUsername());
         // 先查询是否有该账号
         Teacher teacher2 = teacherService.getOne(wrapper);
         if (teacher2 == null) {
@@ -79,7 +61,7 @@ public class TeacherController {
         } else if (teacher2.getStatus() != 0) {
             return ServerResponse.ofError("账号状态异常，请联系管理员");
         }
-        // 登录,使用编号登录
+        // 登录,使用用户名登录
         Teacher teacher = teacherService.teacherLogin(userLoginRequest.getUsername(), userLoginRequest.getPassword());
 
         if (teacher != null) {
@@ -130,13 +112,13 @@ public class TeacherController {
     public ServerResponse queryTeacher(@PathVariable(value = "page") Integer page,
                                        @RequestParam(defaultValue = "10") Integer limit) {
         Page<Teacher> pages = new Page<>(page, limit);
-        QueryWrapper<Teacher> wrapper = new QueryWrapper<Teacher>().orderByDesc("teacher_no");
+        QueryWrapper<Teacher> wrapper = new QueryWrapper<Teacher>().orderByDesc("create_time");
         IPage<Teacher> iPage = teacherService.page(pages, wrapper);
         return ServerResponse.ofSuccess(iPage);
     }
 
     /**
-     * 根据姓名关键字搜索讲师
+     * 根据用户名关键字搜索讲师
      * @return
      */
     @GetMapping("/search/{page}/{keyword}")
@@ -144,7 +126,7 @@ public class TeacherController {
                                         @RequestParam(defaultValue = "10") Integer limit) {
         QueryWrapper<Teacher> wrapper = new QueryWrapper<>();
         wrapper.orderByDesc("update_time");
-        wrapper.like(!StringUtils.isEmpty(keyword), "realname", keyword);
+        wrapper.like(!StringUtils.isEmpty(keyword), "username", keyword);
         Page<Teacher> pages = new Page<>(page, limit);
         IPage<Teacher> iPage = teacherService.page(pages, wrapper);
         if (page != null) {
@@ -166,18 +148,6 @@ public class TeacherController {
         return ServerResponse.ofError("删除失败！");
     }
 
-    /**
-     * 用于给讲师生成讲师编号,返回一个讲师编号
-     * @return
-     */
-    @GetMapping("/no")
-    public ServerResponse getTeacherNo() {
-
-        List<Teacher> teacherList = teacherService.list(new QueryWrapper<Teacher>().select().orderByDesc("teacher_no"));
-
-        // 返回最大编号的讲师编号再+1给新添加的讲师
-        return ServerResponse.ofSuccess(teacherList.get(0).getTeacherNo());
-    }
 
     /**
      * 管理员添加讲师,默认密码是123456
@@ -187,17 +157,11 @@ public class TeacherController {
     @PostMapping("/add")
     public ServerResponse addTeacher(@RequestBody TeacherAddRequest t) {
         Teacher teacher = new Teacher();
-        teacher.setTeacherNo(t.getTeacherNo());
         teacher.setUsername(t.getUsername());
-        teacher.setEmail(t.getEmail());
         // 每一个新增的讲师密码默认是123456
         teacher.setPassword("123456");
-        teacher.setRealname(t.getRealname());
-        teacher.setJobtitle(t.getJobtitle());
         teacher.setTeach(t.getTeach());
-        teacher.setTelephone(t.getTelephone());
         teacher.setAddress(t.getAddress());
-        teacher.setAge(t.getAge());
         boolean b = teacherService.save(teacher);
         if (b) {
             return ServerResponse.ofSuccess("添加讲师成功！");

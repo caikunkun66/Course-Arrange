@@ -102,8 +102,8 @@ export default {
               // 保存信息，跳转到主页
               window.localStorage.setItem('token', ret.token)
               window.localStorage.setItem('admin', JSON.stringify(ret.admin))
-              console.log('登录成功，准备跳转到 /systemdata');
-              this.$router.push('/systemdata')
+              console.log('登录成功，准备跳转到 /coursetable');
+              this.$router.push('/coursetable')
               this.$message({message: "登录成功", type: "success"})
             } else {
               console.log('登录失败:', res.data.message);
@@ -129,9 +129,9 @@ export default {
               let ret = res.data.data
               window.localStorage.setItem('token', ret.token)
               window.localStorage.setItem('teacher', JSON.stringify(ret.teacher))
-              console.log('登录成功，准备跳转到 /systemdata');
+              console.log('登录成功，准备跳转到 /coursetable');
               // 跳转
-              this.$router.push('/systemdata')
+              this.$router.push('/coursetable')
               this.$message({message: "登录成功", type: "success"})
             } else {
               console.log('登录失败:', res.data.message);
