@@ -39,7 +39,7 @@
               </el-progress>
             </div>
             <span style="white-space: nowrap; font-size: 12px; color: #606266; min-width: 60px; text-align: right;">
-              {{ scope.row.completedHours || 0 }}/{{ scope.row.totalHours || 0 }}
+              {{ formatHours(scope.row.completedHours) }}/{{ formatHours(scope.row.totalHours) }}
             </span>
           </div>
         </template>
@@ -107,14 +107,14 @@
           </el-select>
         </el-form-item>
         <el-form-item label="总课时" prop="totalHours">
-          <el-input-number v-model="editFormData.totalHours" :min="0" :max="9999" :step="1" controls-position="right" style="width: 100%;"></el-input-number>
+          <el-input-number v-model="editFormData.totalHours" :min="0" :max="9999" :step="0.5" :precision="1" controls-position="right" style="width: 100%;"></el-input-number>
         </el-form-item>
         <el-form-item label="已上课时" prop="completedHours">
-          <el-input-number v-model="editFormData.completedHours" :min="0" :max="9999" :step="1" controls-position="right" style="width: 100%;"></el-input-number>
+          <el-input-number v-model="editFormData.completedHours" :min="0" :max="9999" :step="0.5" :precision="1" controls-position="right" style="width: 100%;"></el-input-number>
         </el-form-item>
         <el-form-item label="剩余课时">
           <span style="color: #409EFF; font-size: 16px; font-weight: bold;">
-            {{ (editFormData.totalHours || 0) - (editFormData.completedHours || 0) }} 课时
+            {{ formatHours((editFormData.totalHours || 0) - (editFormData.completedHours || 0)) }} 课时
           </span>
         </el-form-item>
         <el-form-item label="课程时长" prop="classDuration">
@@ -178,14 +178,14 @@
           <el-input v-model="addFormData.password" type="password" autocomplete="off" placeholder="默认123456"></el-input>
         </el-form-item>
         <el-form-item label="总课时" prop="totalHours">
-          <el-input-number v-model="addFormData.totalHours" :min="0" :max="9999" :step="1" controls-position="right" style="width: 100%;"></el-input-number>
+          <el-input-number v-model="addFormData.totalHours" :min="0" :max="9999" :step="0.5" :precision="1" controls-position="right" style="width: 100%;"></el-input-number>
         </el-form-item>
         <el-form-item label="已上课时" prop="completedHours">
-          <el-input-number v-model="addFormData.completedHours" :min="0" :max="9999" :step="1" controls-position="right" style="width: 100%;"></el-input-number>
+          <el-input-number v-model="addFormData.completedHours" :min="0" :max="9999" :step="0.5" :precision="1" controls-position="right" style="width: 100%;"></el-input-number>
         </el-form-item>
         <el-form-item label="剩余课时">
           <span style="color: #409EFF; font-size: 16px; font-weight: bold;">
-            {{ (addFormData.totalHours || 0) - (addFormData.completedHours || 0) }} 课时
+            {{ formatHours((addFormData.totalHours || 0) - (addFormData.completedHours || 0)) }} 课时
           </span>
         </el-form-item>
         <el-form-item label="课程时长" prop="classDuration">
@@ -352,6 +352,12 @@ export default {
   },
 
   methods: {
+    // 格式化课时显示（支持小数）
+    formatHours(hours) {
+      if (!hours || hours === 0) return '0';
+      // 如果是整数，显示整数；否则显示一位小数
+      return hours % 1 === 0 ? hours.toString() : hours.toFixed(1);
+    },
     
     // 头像上传前验证
     beforeAvatarUpload(file) {

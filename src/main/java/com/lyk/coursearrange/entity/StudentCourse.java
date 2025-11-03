@@ -73,10 +73,10 @@ public class StudentCourse extends Model<StudentCourse> {
     
 
     /**
-     * 课时数（整数）
+     * 课时数（支持小数，如1.5）
      */
     @TableField("duration")
-    private Integer duration;
+    private Double duration;
 
     /**
      * 备注

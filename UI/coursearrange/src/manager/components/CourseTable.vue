@@ -79,7 +79,7 @@
             </div>
             <div class="stat-item">
               <div class="stat-label">总课时</div>
-              <div class="stat-value">{{ Math.round(monthTotalHours) }}</div>
+              <div class="stat-value">{{ formatHours(monthTotalHours) }}</div>
             </div>
             <div class="stat-item">
               <div class="stat-label">已完成</div>
@@ -162,7 +162,7 @@
         </div>
         <div class="detail-row">
           <label>课时：</label>
-          <span>{{ selectedCourse.duration }} 课时</span>
+          <span>{{ formatHours(selectedCourse.duration) }} 课时</span>
         </div>
         <div class="detail-row" v-if="selectedCourse.remark">
           <label>备注：</label>
@@ -207,7 +207,7 @@
             </div>
             <div class="course-details-small">
               <span><i class="el-icon-user"></i> {{ course.teacherName }}</span>
-              <span><i class="el-icon-timer"></i> {{ course.duration }} 课时</span>
+              <span><i class="el-icon-timer"></i> {{ formatHours(course.duration) }} 课时</span>
             </div>
           </el-card>
         </el-timeline-item>
@@ -239,20 +239,41 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="课程" prop="courseName">
-          <el-input
-            v-model="courseForm.courseName"
-            placeholder="课程名称"
-            :disabled="!isEdit && !!courseForm.courseName"
-            style="width: 100%;"
-          >
-          </el-input>
-          <span v-if="!isEdit && courseForm.courseName && currentTeacher" style="color: #909399; font-size: 12px; margin-top: 5px; display: block;">
-            来源：教师授课科目（{{ currentTeacher.teach }}）
-          </span>
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="课程" prop="courseName">
+              <el-input
+                v-model="courseForm.courseName"
+                placeholder="课程名称"
+                :disabled="!isEdit && !!courseForm.courseName"
+                style="width: 100%;"
+              >
+              </el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="授课教师" prop="teacherId">
+              <el-select
+                v-model="courseForm.teacherId"
+                placeholder="选择教师"
+                filterable
+                clearable
+                style="width: 100%;"
+                :disabled="!isEdit && !!courseForm.teacherId"
+              >
+                <el-option
+                  v-for="teacher in teacherList"
+                  :key="teacher.id"
+                  :label="teacher.username"
+                  :value="teacher.id"
+                ></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-        <el-form-item label="上课日期" prop="courseDate">
+        <!-- 上课日期（从日历点击添加时隐藏） -->
+        <el-form-item v-if="!isDatePreset" label="上课日期" prop="courseDate">
           <el-date-picker
             v-model="courseForm.courseDate"
             type="date"
@@ -263,71 +284,85 @@
           </el-date-picker>
         </el-form-item>
 
-        <el-form-item label="开始时间" prop="startTime">
-          <el-time-picker
-            v-model="courseForm.startTime"
-            placeholder="选择开始时间"
-            value-format="HH:mm"
-            format="HH:mm"
-            style="width: 100%;"
-            @change="calculateEndTime"
-          >
-          </el-time-picker>
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="开始时间" prop="startTime">
+              <div class="time-input-wrapper">
+                <el-select
+                  v-model="selectedHour"
+                  placeholder="小时"
+                  class="time-hour-select"
+                  filterable
+                  allow-create
+                  default-first-option
+                  @change="updateStartTime"
+                >
+                  <el-option
+                    v-for="hour in hourOptions"
+                    :key="hour"
+                    :label="hour"
+                    :value="hour"
+                  ></el-option>
+                </el-select>
+                <span class="time-separator">:</span>
+                <el-select
+                  v-model="selectedMinute"
+                  placeholder="分钟"
+                  class="time-minute-select"
+                  filterable
+                  allow-create
+                  default-first-option
+                  @change="updateStartTime"
+                >
+                  <el-option
+                    v-for="minute in minuteOptions"
+                    :key="minute"
+                    :label="minute"
+                    :value="minute"
+                  ></el-option>
+                </el-select>
+              </div>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="课时数" prop="duration">
+              <el-input-number
+                v-model="courseForm.duration"
+                :min="0.5"
+                :max="10"
+                :step="0.5"
+                :precision="1"
+                style="width: 100%;"
+                @change="calculateEndTime"
+              ></el-input-number>
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-        <el-form-item label="课时数" prop="duration">
-          <el-input-number
-            v-model="courseForm.duration"
-            :min="1"
-            :max="10"
-            :step="1"
-            :precision="0"
-            style="width: 100%;"
-            @change="calculateEndTime"
-          ></el-input-number>
-          <span style="color: #909399; font-size: 12px; margin-left: 10px;">
-            （每节课{{ selectedStudentDuration }}分钟）
-          </span>
-        </el-form-item>
-
-        <el-form-item label="结束时间">
-          <el-input
-            v-model="courseForm.endTime"
-            placeholder="自动计算"
-            readonly
-            style="width: 100%;"
-          >
-            <template slot="prepend">
-              <i class="el-icon-time"></i>
-            </template>
-            <template slot="append" v-if="courseForm.endTime">
-              <span style="color: #67c23a;">
-                <i class="el-icon-success"></i> 共{{ totalMinutes }}分钟
-              </span>
-            </template>
-          </el-input>
-        </el-form-item>
-
-        <el-form-item label="授课教师" prop="teacherId">
-          <el-select
-            v-model="courseForm.teacherId"
-            placeholder="选择教师"
-            filterable
-            clearable
-            style="width: 100%;"
-            :disabled="!isEdit && !!courseForm.teacherId"
-          >
-            <el-option
-              v-for="teacher in teacherList"
-              :key="teacher.id"
-              :label="teacher.username"
-              :value="teacher.id"
-            ></el-option>
-          </el-select>
-          <span v-if="!isEdit && currentTeacher && courseForm.teacherId === currentTeacher.id" style="color: #67c23a; font-size: 12px; margin-top: 5px; display: block;">
-            <i class="el-icon-success"></i> 已自动选择：{{ currentTeacher.username }}（当前登录教师）
-          </span>
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="结束时间">
+              <el-input
+                v-model="courseForm.endTime"
+                placeholder="自动计算"
+                disabled
+                class="end-time-input"
+              >
+              </el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="总时长">
+              <el-input
+                :value="courseForm.duration ? totalMinutes + ' 分钟' : ''"
+                placeholder="自动计算"
+                disabled
+                class="end-time-input"
+              >
+              </el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
 
         <el-form-item label="备注" prop="remark">
           <el-input
@@ -338,40 +373,44 @@
           ></el-input>
         </el-form-item>
 
-        <!-- 重复模式（仅在添加时显示） -->
-        <el-form-item v-if="!isEdit" label="重复模式">
-          <el-select
-            v-model="courseForm.repeatMode"
-            placeholder="选择重复模式"
-            style="width: 100%;"
-            @change="handleRepeatModeChange"
-          >
-            <el-option label="不重复（仅添加一次）" value="none"></el-option>
-            <el-option label="每天" value="daily"></el-option>
-            <el-option label="每周" value="weekly"></el-option>
-            <el-option label="工作日（周一至周五）" value="weekday"></el-option>
-          </el-select>
-        </el-form-item>
-
-        <!-- 重复次数（仅在选择了重复模式时显示） -->
-        <el-form-item 
-          v-if="!isEdit && courseForm.repeatMode && courseForm.repeatMode !== 'none'" 
-          label="重复次数"
-          prop="repeatCount"
-        >
-          <el-input-number
-            v-model="courseForm.repeatCount"
-            :min="1"
-            :max="100"
-            :step="1"
-            :precision="0"
-            style="width: 100%;"
-            placeholder="请输入重复次数"
-          ></el-input-number>
-          <span style="color: #909399; font-size: 12px; margin-left: 10px;">
-            （将生成{{ courseForm.repeatCount || 0 }}条课程记录）
-          </span>
-        </el-form-item>
+        <!-- 重复模式和重复次数（仅在添加时显示） -->
+        <el-row v-if="!isEdit" :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="重复模式">
+              <el-select
+                v-model="courseForm.repeatMode"
+                placeholder="选择重复模式"
+                style="width: 100%;"
+                @change="handleRepeatModeChange"
+              >
+                <el-option label="不重复（仅添加一次）" value="none"></el-option>
+                <el-option label="每天" value="daily"></el-option>
+                <el-option label="每周" value="weekly"></el-option>
+                <el-option label="工作日（周一至周五）" value="weekday"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item 
+              v-if="courseForm.repeatMode && courseForm.repeatMode !== 'none'" 
+              label="重复次数"
+              prop="repeatCount"
+            >
+              <el-input-number
+                v-model="courseForm.repeatCount"
+                :min="1"
+                :max="100"
+                :step="1"
+                :precision="0"
+                style="width: 100%;"
+                placeholder="请输入重复次数"
+              ></el-input-number>
+              <div style="color: #909399; font-size: 12px; margin-top: 5px;">
+                将生成{{ courseForm.repeatCount || 0 }}条记录
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
 
       <div slot="footer" class="dialog-footer">
@@ -415,6 +454,7 @@ export default {
       submitting: false,
       detailDialogVisible: false,
       dayCourseDialogVisible: false,
+      isDatePreset: false, // 标记日期是否预设（从日历点击添加）
       
       // 选中的课程和日期
       selectedCourse: null,
@@ -438,6 +478,16 @@ export default {
       
       // 默认头像
       defaultAvatar: 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png',
+      
+      // 时间选择器的小时和分钟
+      selectedHour: null,
+      selectedMinute: null,
+      
+      // 小时选项（0-23）
+      hourOptions: Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')),
+      
+      // 分钟选项（0、5、10...55，步长为5）
+      minuteOptions: Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0')),
       
       // 表单验证规则
       courseRules: {
@@ -511,7 +561,9 @@ export default {
     
     // 总分钟数
     totalMinutes() {
-      return Math.round(this.selectedStudentDuration * (this.courseForm.duration || 0));
+      const minutes = this.selectedStudentDuration * (this.courseForm.duration || 0);
+      // 保留整数，因为分钟数通常不需要小数
+      return Math.round(minutes);
     }
   },
   
@@ -533,6 +585,103 @@ export default {
   },
   
   methods: {
+    // 格式化课时显示（支持小数）
+    formatHours(hours) {
+      if (!hours || hours === 0) return '0';
+      // 如果是整数，显示整数；否则显示一位小数
+      return hours % 1 === 0 ? hours.toString() : hours.toFixed(1);
+    },
+    
+    // 根据选中的小时和分钟更新开始时间
+    updateStartTime() {
+      if (this.selectedHour !== null && this.selectedMinute !== null) {
+        // 验证并格式化小时
+        let hour = String(this.selectedHour).replace(/\D/g, '');
+        if (hour === '') {
+          this.selectedHour = null;
+          return;
+        }
+        
+        let hourNum = parseInt(hour, 10);
+        if (isNaN(hourNum)) {
+          this.selectedHour = null;
+          this.$message.warning('请输入有效的小时数（0-23）');
+          return;
+        }
+        
+        // 限制在0-23范围
+        if (hourNum < 0) {
+          hourNum = 0;
+        } else if (hourNum > 23) {
+          hourNum = 23;
+          this.$message.warning('小时数已调整为23');
+        }
+        
+        this.selectedHour = String(hourNum).padStart(2, '0');
+        
+        // 验证并格式化分钟（必须是5的倍数）
+        let minute = String(this.selectedMinute).replace(/\D/g, '');
+        if (minute === '') {
+          this.selectedMinute = null;
+          return;
+        }
+        
+        let minuteNum = parseInt(minute, 10);
+        if (isNaN(minuteNum)) {
+          this.selectedMinute = null;
+          this.$message.warning('请输入有效的分钟数（0-55，5的倍数）');
+          return;
+        }
+        
+        // 限制在0-55范围
+        if (minuteNum < 0) {
+          minuteNum = 0;
+        } else if (minuteNum > 55) {
+          minuteNum = 55;
+          this.$message.warning('分钟数已调整为55');
+        }
+        
+        // 调整为5的倍数（四舍五入）
+        const originalMinute = minuteNum;
+        minuteNum = Math.round(minuteNum / 5) * 5;
+        
+        // 如果调整后大于55，改为55
+        if (minuteNum > 55) {
+          minuteNum = 55;
+        }
+        
+        this.selectedMinute = String(minuteNum).padStart(2, '0');
+        
+        // 如果调整了分钟，给用户提示
+        if (originalMinute !== minuteNum) {
+          this.$message.info(`分钟已自动调整为：${this.selectedMinute}（5的倍数）`);
+        }
+        
+        // 更新表单
+        this.courseForm.startTime = `${this.selectedHour}:${this.selectedMinute}`;
+        this.calculateEndTime();
+      }
+    },
+    
+    // 解析时间字符串到小时和分钟选择器
+    parseTimeToSelectors(timeString) {
+      if (!timeString) {
+        this.selectedHour = null;
+        this.selectedMinute = null;
+        return;
+      }
+      
+      try {
+        const [hours, minutes] = timeString.split(':');
+        this.selectedHour = hours;
+        this.selectedMinute = minutes;
+      } catch (error) {
+        console.error('解析时间失败:', error);
+        this.selectedHour = null;
+        this.selectedMinute = null;
+      }
+    },
+    
     // 计算结束时间
     calculateEndTime() {
       if (!this.courseForm.startTime || !this.courseForm.duration) {
@@ -838,6 +987,7 @@ export default {
     // 打开添加对话框
     openAddDialog() {
       this.isEdit = false;
+      this.isDatePreset = false; // 从顶部按钮添加，需要显示日期选择
       this.dialogTitle = '添加课程';
       this.resetForm();
       
@@ -863,6 +1013,7 @@ export default {
     // 为指定日期打开添加对话框
     openAddDialogForDate(date) {
       this.isEdit = false;
+      this.isDatePreset = true; // 从日历点击添加，日期已预设，不显示日期选择
       this.dialogTitle = `添加课程 - ${date}`;
       this.resetForm();
       
@@ -890,11 +1041,14 @@ export default {
     // 编辑课程
     editCourse(course) {
       this.isEdit = true;
+      this.isDatePreset = false; // 编辑模式下显示日期字段
       this.dialogTitle = '编辑课程';
       this.courseForm = Object.assign({}, course);
       // 编辑模式下，重置重复相关字段（不会显示，但确保数据干净）
       this.courseForm.repeatMode = 'none';
       this.courseForm.repeatCount = 1;
+      // 解析开始时间到选择器
+      this.parseTimeToSelectors(course.startTime);
       this.dialogVisible = true;
       // 编辑时也可以重新计算结束时间
       this.$nextTick(() => {
@@ -1157,6 +1311,10 @@ export default {
         repeatMode: 'none',
         repeatCount: 1
       };
+      // 重置时间选择器
+      this.selectedHour = null;
+      this.selectedMinute = null;
+      // 注意：不在这里重置 isDatePreset，由各个打开对话框的方法控制
       if (this.$refs.courseForm) {
         this.$refs.courseForm.resetFields();
       }
@@ -1751,6 +1909,83 @@ export default {
 
   .dialog-footer {
     text-align: right;
+  }
+  
+  // 结束时间输入框样式
+  .end-time-input {
+    /deep/ .el-input__inner {
+      text-align: center;
+      padding-left: 15px;
+      padding-right: 15px;
+      border-radius: 8px;
+    }
+  }
+  
+  // 时间输入框样式
+  .time-input-wrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 40px;
+    border: 1px solid #dcdfe6;
+    border-radius: 8px;
+    background-color: #fff;
+    transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+    padding: 0 15px;
+    box-sizing: border-box;
+    overflow: hidden;
+    
+    &:hover {
+      border-color: #c0c4cc;
+    }
+    
+    &:focus-within {
+      border-color: #409eff;
+    }
+    
+    .time-hour-select,
+    .time-minute-select {
+      flex: 1;
+      
+      /deep/ .el-input {
+        .el-input__inner {
+          border: none !important;
+          padding: 0 !important;
+          height: 38px;
+          line-height: 38px;
+          box-shadow: none !important;
+          background-color: transparent !important;
+          text-align: center;
+          
+          &:hover,
+          &:focus {
+            border: none !important;
+            box-shadow: none !important;
+          }
+        }
+        
+        .el-input__suffix {
+          display: none !important;
+        }
+        
+        .el-input__prefix {
+          display: none !important;
+        }
+      }
+      
+      /deep/ .el-select__caret {
+        display: none !important;
+      }
+    }
+    
+    .time-separator {
+      color: #606266;
+      font-size: 14px;
+      font-weight: normal;
+      padding: 0 2px;
+      user-select: none;
+      flex-shrink: 0;
+    }
   }
 }
 

@@ -48,14 +48,14 @@ public class Student extends Model<Student> {
     private Integer teacherId;
 
     /**
-     * 总课时
+     * 总课时（支持小数，如1.5）
      */
-    private Integer totalHours;
+    private Double totalHours;
 
     /**
-     * 已上课时
+     * 已上课时（支持小数，如1.5）
      */
-    private Integer completedHours;
+    private Double completedHours;
 
     /**
      * 课程备注
