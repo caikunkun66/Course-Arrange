@@ -19,14 +19,14 @@
     </div>
     <!-- 数据显示 -->
     <el-table :data="studentData" size="mini" :stripe="true" :highlight-current-row="true" style="width: 100%">
-      <el-table-column prop="id" label="ID" width="60"></el-table-column>
+      <el-table-column prop="id" label="ID" width="60" align="center"></el-table-column>
       <el-table-column label="头像" width="80" align="center">
         <template slot-scope="scope">
           <el-avatar :size="40" :src="scope.row.avatar || defaultAvatar" fit="cover"></el-avatar>
         </template>
       </el-table-column>
-      <el-table-column prop="username" label="昵称" min-width="100"></el-table-column>
-      <el-table-column prop="teacherName" label="所属教师" min-width="100"></el-table-column>
+      <el-table-column prop="username" label="昵称" min-width="100" align="center"></el-table-column>
+      <el-table-column prop="teacherName" label="所属教师" min-width="100" align="center"></el-table-column>
       <el-table-column label="课时进度" min-width="200" align="center">
         <template slot-scope="scope">
           <div style="display: flex; align-items: center; width: 100%;">
@@ -51,15 +51,15 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="courseRemark" label="课程备注" min-width="100" show-overflow-tooltip></el-table-column>
-      <el-table-column prop="studentRemark" label="学生备注" min-width="100" show-overflow-tooltip></el-table-column>
+      <el-table-column prop="courseRemark" label="课程备注" min-width="100" align="center" show-overflow-tooltip></el-table-column>
+      <el-table-column prop="studentRemark" label="学生备注" min-width="100" align="center" show-overflow-tooltip></el-table-column>
       <!-- <el-table-column prop="createTime" label="创建时间" min-width="140"></el-table-column> -->
       <el-table-column label="课程日志" width="110" align="center">
         <template slot-scope="scope">
           <el-button type="text" size="mini" @click="openLog(scope.row)">查看日志</el-button>
         </template>
       </el-table-column>
-      <el-table-column prop="operation" label="操作" width="280" fixed="right">
+      <el-table-column prop="operation" label="操作" width="280" align="center" fixed="right">
         <template slot-scope="scope">
           <div class="operation-buttons">
             <el-button type="primary" size="mini" @click="editById(scope.$index, scope.row)">编辑</el-button>
@@ -249,23 +249,23 @@
       <div v-if="renewStudent">
         <el-form :model="renewFormData" label-position="right" label-width="120px" ref="renewForm" :rules="renewFormRules">
           <el-form-item label="学生昵称">
-            <span style="font-weight: 600; color: #303133; margin-left: 10px;">{{ renewStudent.username }}</span>
+            <span style="font-weight: 600; color: #303133; margin-left: 20px;">{{ renewStudent.username }}</span>
           </el-form-item>
           <el-form-item label="当前总课时">
-            <span style="color: #409EFF; font-size: 16px; font-weight: bold; margin-left: 10px;">
+            <span style="color: #409EFF; font-size: 16px; font-weight: bold; margin-left: 20px;">
               {{ formatHours(renewStudent.totalHours || 0) }} 课时
             </span>
           </el-form-item>
           <el-form-item label="当前剩余课时">
-            <span style="color: #67C23A; font-size: 16px; font-weight: bold; margin-left: 10px;">
+            <span style="color: #67C23A; font-size: 16px; font-weight: bold; margin-left: 20px;">
               {{ formatHours((renewStudent.totalHours || 0) - (renewStudent.completedHours || 0)) }} 课时
             </span>
           </el-form-item>
           <el-form-item label="增加课时" prop="hours">
-            <el-input-number v-model="renewFormData.hours" :min="0.5" :max="9999" :step="0.5" :precision="1" controls-position="right" style="width: 100px; margin-left: 10px;"></el-input-number>
+            <el-input-number v-model="renewFormData.hours" :min="0" :max="9999" :step="1" :precision="1" controls-position="right" style="width: 100px; margin-left: 20px;"></el-input-number>
           </el-form-item>
           <el-form-item label="续课后总课时">
-            <span style="color: #E6A23C; font-size: 18px; font-weight: bold; margin-left: 10px;">
+            <span style="color: #E6A23C; font-size: 18px; font-weight: bold; margin-left: 20px;">
               {{ formatHours((renewStudent.totalHours || 0) + (renewFormData.hours || 0)) }} 课时
             </span>
           </el-form-item>
@@ -363,7 +363,7 @@ export default {
       renewFormRules: {
         hours: [
           { required: true, message: "请输入续课课时", trigger: "blur" },
-          { type: 'number', min: 0.5, message: "续课课时必须大于0", trigger: "blur" }
+          { type: 'number', min: 0.1, message: "续课课时必须大于0", trigger: "blur" }
         ]
       }
     };
@@ -826,7 +826,7 @@ export default {
     commitRenew() {
       this.$refs.renewForm.validate(valid => {
         if (valid) {
-          if (this.renewFormData.hours <= 0) {
+          if (!this.renewFormData.hours || this.renewFormData.hours <= 0) {
             this.$message.warning('续课课时必须大于0')
             return
           }
