@@ -17,6 +17,17 @@
       <!-- 添加学生按钮 -->
       <el-button class="add-student-btn" type="primary" icon="el-icon-plus" @click="openAddDialog">添加学生</el-button>
     </div>
+    
+    <!-- 统计信息 -->
+    <div class="statistics-bar">
+      <div class="stat-item">
+        <i class="el-icon-user-solid"></i>
+        <span class="stat-label">学生总数</span>
+        <span class="stat-value">{{ total }}</span>
+        <span class="stat-unit">人</span>
+      </div>
+    </div>
+    
     <!-- 数据显示 -->
     <el-table :data="studentData" size="mini" :stripe="true" :highlight-current-row="true" style="width: 100%">
       <el-table-column prop="id" label="ID" width="60" align="center"></el-table-column>
@@ -963,6 +974,59 @@ export default {
   
   .add-student-btn {
     margin-left: auto;
+  }
+}
+
+// 统计信息栏样式
+.statistics-bar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    i {
+      font-size: 28px;
+      color: #ffffff;
+    }
+    
+    .stat-label {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 500;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      color: #ffffff;
+      font-weight: 700;
+      line-height: 1;
+    }
+    
+    .stat-unit {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 500;
+    }
   }
 }
 
