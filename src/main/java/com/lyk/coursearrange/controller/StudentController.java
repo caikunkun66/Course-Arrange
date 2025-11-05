@@ -7,10 +7,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lyk.coursearrange.common.ServerResponse;
 import com.lyk.coursearrange.common.UserLoginToken;
 import com.lyk.coursearrange.entity.Student;
+import com.lyk.coursearrange.entity.Teacher;
 import com.lyk.coursearrange.entity.request.PasswordVO;
 import com.lyk.coursearrange.entity.request.StudentLoginRequest;
 import com.lyk.coursearrange.entity.request.StudentRegisterRequest;
 import com.lyk.coursearrange.service.StudentService;
+import com.lyk.coursearrange.service.TeacherService;
 import com.lyk.coursearrange.service.impl.TokenService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +38,9 @@ public class StudentController {
 
     @Autowired
     private TokenService tokenService;
+
+    @Autowired
+    private TeacherService teacherService;
 
 
     /**
@@ -338,6 +343,46 @@ public class StudentController {
             return ServerResponse.ofSuccess("续课成功", student);
         }
         return ServerResponse.ofError("续课失败");
+    }
+
+    /**
+     * 学生认领教师
+     * @param id 学生ID
+     * @param teacherId 教师ID
+     * @return
+     */
+    @PostMapping("/claim-teacher/{id}")
+    @UserLoginToken
+    public ServerResponse claimTeacher(@PathVariable("id") Integer id, @RequestParam("teacherId") Integer teacherId) {
+        if (teacherId == null) {
+            return ServerResponse.ofError("请选择教师");
+        }
+        
+        // 获取学生信息
+        Student student = studentService.getById(id);
+        if (student == null) {
+            return ServerResponse.ofError("学生不存在");
+        }
+        
+        // 检查是否已经有教师
+        if (student.getTeacherId() != null) {
+            return ServerResponse.ofError("您已经有所属教师，无法重复认领");
+        }
+        
+        // 验证教师是否存在
+        Teacher teacher = teacherService.getById(teacherId);
+        if (teacher == null) {
+            return ServerResponse.ofError("选择的教师不存在");
+        }
+        
+        // 设置教师ID
+        student.setTeacherId(teacherId);
+        boolean b = studentService.updateById(student);
+        
+        if (b) {
+            return ServerResponse.ofSuccess("认领成功", student);
+        }
+        return ServerResponse.ofError("认领失败");
     }
 
 

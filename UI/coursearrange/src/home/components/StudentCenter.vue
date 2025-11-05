@@ -27,6 +27,12 @@
             <el-tag type="success" effect="plain">
               <i class="el-icon-check"></i> 账号正常
             </el-tag>
+            <el-tag v-if="studentInfo.teacherId" type="primary" effect="plain">
+              <i class="el-icon-user"></i> 所属教师: {{ teacherName || '加载中...' }}
+            </el-tag>
+            <el-tag v-else type="info" effect="plain">
+              <i class="el-icon-warning"></i> 未认领教师
+            </el-tag>
             <span class="join-time">
               <i class="el-icon-time"></i>
               加入时间: {{ formatDate(studentInfo.createTime) }}
@@ -111,6 +117,9 @@
         <el-button type="primary" icon="el-icon-s-marketing" @click="handleViewSchedule">
           查看课表
         </el-button>
+        <el-button v-if="!studentInfo.teacherId" type="danger" icon="el-icon-user-solid" @click="handleClaimTeacher">
+          认领教师
+        </el-button>
         <el-button type="success" icon="el-icon-unlock" @click="handleChangePassword">
           修改密码
         </el-button>
@@ -146,22 +155,24 @@
     >
       <el-form :model="editForm" :rules="editRules" ref="editForm" label-width="100px">
         <el-form-item label="头像">
-          <div class="avatar-upload">
-            <el-avatar :size="80" :src="editForm.avatar || defaultAvatar">
-              <i class="el-icon-user-solid"></i>
-            </el-avatar>
-            <el-input 
-              v-model="editForm.avatar" 
-              placeholder="请输入头像URL"
-              style="margin-left: 20px; width: 300px;"
+          <div class="avatar-upload-container">
+            <el-upload
+              class="avatar-uploader"
+              :action="uploadUrl"
+              :show-file-list="false"
+              :on-success="handleAvatarSuccess"
+              :before-upload="beforeAvatarUpload"
+              :headers="uploadHeaders"
             >
-              <template slot="prepend">URL</template>
-            </el-input>
+              <img v-if="editForm.avatar" :src="editForm.avatar" class="avatar-preview">
+              <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+            </el-upload>
+            <div class="avatar-upload-tip">点击上传头像，支持 jpg/png 格式，不超过2MB</div>
           </div>
         </el-form-item>
         
-        <el-form-item label="昵称" prop="username">
-          <el-input v-model="editForm.username" placeholder="请输入昵称"></el-input>
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="editForm.username" placeholder="用户名" disabled></el-input>
         </el-form-item>
         
         <el-form-item label="个性签名">
@@ -183,6 +194,68 @@
         </el-button>
       </div>
     </el-dialog>
+
+    <!-- 认领教师对话框 -->
+    <el-dialog 
+      title="认领教师" 
+      :visible.sync="claimDialogVisible"
+      width="600px"
+      @open="loadTeacherList"
+    >
+      <div class="claim-teacher-content">
+        <el-alert
+          title="温馨提示"
+          type="info"
+          description="请选择您的任课教师，认领后将无法修改，请谨慎选择！"
+          :closable="false"
+          style="margin-bottom: 20px;">
+        </el-alert>
+        
+        <el-form :model="claimForm" :rules="claimRules" ref="claimForm" label-width="100px">
+          <el-form-item label="选择教师" prop="teacherId">
+            <el-select 
+              v-model="claimForm.teacherId" 
+              placeholder="请选择教师"
+              filterable
+              style="width: 100%"
+              :loading="teacherListLoading"
+            >
+              <el-option
+                v-for="teacher in teacherList"
+                :key="teacher.id"
+                :label="teacher.username"
+                :value="teacher.id"
+              >
+                <span style="float: left">{{ teacher.username }}</span>
+                <span style="float: right; color: #8492a6; font-size: 13px">
+                  ID: {{ teacher.id }}
+                </span>
+              </el-option>
+            </el-select>
+          </el-form-item>
+        </el-form>
+
+        <div v-if="selectedTeacher" class="teacher-info-preview">
+          <h4>教师信息预览</h4>
+          <div class="teacher-detail">
+            <el-avatar :size="60" :src="selectedTeacher.avatar || defaultAvatar">
+              <i class="el-icon-user-solid"></i>
+            </el-avatar>
+            <div class="teacher-detail-info">
+              <p><strong>姓名：</strong>{{ selectedTeacher.username }}</p>
+              <p v-if="selectedTeacher.description"><strong>简介：</strong>{{ selectedTeacher.description }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="claimDialogVisible = false">取 消</el-button>
+        <el-button type="danger" @click="handleConfirmClaim" :loading="claimLoading">
+          确认认领
+        </el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -192,6 +265,7 @@ export default {
   data() {
     return {
       studentInfo: {},
+      teacherName: '',
       defaultAvatar: 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png',
       editDialogVisible: false,
       saveLoading: false,
@@ -201,10 +275,27 @@ export default {
         avatar: '',
         description: ''
       },
+      uploadUrl: process.env.API_BASE_URL + '/upload/avatar',
+      uploadHeaders: {
+        'Authorization': localStorage.getItem('token') || ''
+      },
       editRules: {
         username: [
           { required: true, message: '请输入昵称', trigger: 'blur' },
           { min: 2, max: 20, message: '昵称长度在 2 到 20 个字符', trigger: 'blur' }
+        ]
+      },
+      // 认领教师相关
+      claimDialogVisible: false,
+      claimLoading: false,
+      teacherListLoading: false,
+      teacherList: [],
+      claimForm: {
+        teacherId: null
+      },
+      claimRules: {
+        teacherId: [
+          { required: true, message: '请选择教师', trigger: 'change' }
         ]
       }
     }
@@ -229,6 +320,11 @@ export default {
       if (percentage < 30) return '#f56c6c';
       if (percentage < 70) return '#e6a23c';
       return '#67c23a';
+    },
+    // 获取选中的教师信息
+    selectedTeacher() {
+      if (!this.claimForm.teacherId) return null;
+      return this.teacherList.find(t => t.id === this.claimForm.teacherId);
     }
   },
   mounted() {
@@ -251,9 +347,15 @@ export default {
     
     // 从服务器获取最新的学生信息
     fetchStudentFromServer(id) {
-      this.$axios.get(`/student/${id}`)
+      // 添加token到请求头
+      const config = {
+        headers: {
+          'Authorization': localStorage.getItem('token') || ''
+        }
+      };
+      this.$axios.get(`/student/${id}`, config)
         .then(res => {
-          if (res.data.status === 0 && res.data.data) {
+          if (res.data.code === 0 && res.data.data) {
             this.studentInfo = res.data.data;
             // 更新localStorage
             window.localStorage.setItem('student', JSON.stringify(res.data.data));
@@ -287,15 +389,21 @@ export default {
       this.$refs.editForm.validate(valid => {
         if (valid) {
           this.saveLoading = true;
-          this.$axios.post('/student/modify', this.editForm)
+          // 添加token到请求头
+          const config = {
+            headers: {
+              'Authorization': localStorage.getItem('token') || ''
+            }
+          };
+          this.$axios.post('/student/modify', this.editForm, config)
             .then(res => {
-              if (res.data.status === 0) {
+              if (res.data.code === 0) {
                 this.$message.success('保存成功！');
                 this.editDialogVisible = false;
                 // 重新加载学生信息
                 this.fetchStudentFromServer(this.studentInfo.id);
               } else {
-                this.$message.error(res.data.msg || '保存失败');
+                this.$message.error(res.data.message || '保存失败');
               }
             })
             .catch(err => {
@@ -321,6 +429,129 @@ export default {
     // 修改密码
     handleChangePassword() {
       this.$router.push('/password');
+    },
+    
+    // 头像上传前验证
+    beforeAvatarUpload(file) {
+      const isJPG = file.type === 'image/jpeg' || file.type === 'image/png';
+      const isLt2M = file.size / 1024 / 1024 < 2;
+
+      if (!isJPG) {
+        this.$message.error('上传头像图片只能是 JPG 或 PNG 格式!');
+        return false;
+      }
+      if (!isLt2M) {
+        this.$message.error('上传头像图片大小不能超过 2MB!');
+        return false;
+      }
+      return true;
+    },
+
+    // 头像上传成功
+    handleAvatarSuccess(res, file) {
+      if (res.code === 0) {
+        this.editForm.avatar = res.data.url;
+        this.$message.success('头像上传成功');
+      } else {
+        this.$message.error(res.message || '头像上传失败');
+      }
+    },
+
+    // 获取教师名称
+    fetchTeacherName(teacherId) {
+      if (!teacherId) return;
+      const config = {
+        headers: {
+          'Authorization': localStorage.getItem('token') || ''
+        }
+      };
+      this.$axios.get(`/teacher/${teacherId}`, config)
+        .then(res => {
+          if (res.data.code === 0 && res.data.data) {
+            this.teacherName = res.data.data.username;
+          }
+        })
+        .catch(err => {
+          console.error('获取教师信息失败:', err);
+        });
+    },
+
+    // 打开认领教师对话框
+    handleClaimTeacher() {
+      this.claimDialogVisible = true;
+    },
+
+    // 加载教师列表
+    loadTeacherList() {
+      this.teacherListLoading = true;
+      this.$axios.get('/teacher/all')
+        .then(res => {
+          if (res.data.code === 0) {
+            this.teacherList = res.data.data || [];
+          } else {
+            this.$message.error('获取教师列表失败');
+          }
+        })
+        .catch(err => {
+          this.$message.error('获取教师列表失败：' + err.message);
+        })
+        .finally(() => {
+          this.teacherListLoading = false;
+        });
+    },
+
+    // 确认认领教师
+    handleConfirmClaim() {
+      this.$refs.claimForm.validate(valid => {
+        if (valid) {
+          this.$confirm('认领教师后将无法修改，确认认领该教师吗？', '确认认领', {
+            confirmButtonText: '确认',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            this.claimLoading = true;
+            this.$axios.post(`/student/claim-teacher/${this.studentInfo.id}`, null, {
+              headers: {
+                'Authorization': localStorage.getItem('token') || ''
+              },
+              params: {
+                teacherId: this.claimForm.teacherId
+              }
+            })
+              .then(res => {
+                if (res.data.code === 0) {
+                  this.$message.success('认领成功！');
+                  this.claimDialogVisible = false;
+                  // 重新加载学生信息
+                  this.fetchStudentFromServer(this.studentInfo.id);
+                  // 重置表单
+                  this.claimForm.teacherId = null;
+                } else {
+                  this.$message.error(res.data.message || '认领失败');
+                }
+              })
+              .catch(err => {
+                this.$message.error('认领失败：' + err.message);
+              })
+              .finally(() => {
+                this.claimLoading = false;
+              });
+          }).catch(() => {
+            this.$message.info('已取消认领');
+          });
+        }
+      });
+    }
+  },
+  watch: {
+    // 监听学生信息变化，获取教师名称
+    'studentInfo.teacherId': {
+      handler(newVal) {
+        if (newVal) {
+          this.fetchTeacherName(newVal);
+        }
+      },
+      immediate: true
     }
   }
 }
@@ -610,13 +841,101 @@ export default {
 }
 
 // 对话框样式
-.avatar-upload {
+.avatar-upload-container {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  
+  .avatar-uploader {
+    /deep/ .el-upload {
+      border: 2px dashed #d9d9d9;
+      border-radius: 12px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      width: 120px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fafafa;
+      
+      &:hover {
+        border-color: #667eea;
+        background: #f0f0ff;
+      }
+    }
+    
+    .avatar-preview {
+      width: 120px;
+      height: 120px;
+      display: block;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+    
+    .avatar-uploader-icon {
+      font-size: 32px;
+      color: #8c939d;
+      transition: color 0.3s ease;
+      
+      &:hover {
+        color: #667eea;
+      }
+    }
+  }
+  
+  .avatar-upload-tip {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #909399;
+    line-height: 1.5;
+  }
 }
 
 .dialog-footer {
   text-align: right;
+}
+
+// 认领教师对话框样式
+.claim-teacher-content {
+  .teacher-info-preview {
+    margin-top: 24px;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    
+    h4 {
+      margin: 0 0 16px 0;
+      font-size: 15px;
+      color: #1f2937;
+    }
+    
+    .teacher-detail {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      
+      .teacher-detail-info {
+        flex: 1;
+        
+        p {
+          margin: 0 0 8px 0;
+          font-size: 14px;
+          color: #4b5563;
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+          
+          strong {
+            color: #1f2937;
+          }
+        }
+      }
+    }
+  }
 }
 
 // 响应式设计

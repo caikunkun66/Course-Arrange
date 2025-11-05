@@ -36,7 +36,7 @@
           <el-form-item prop="username">
             <el-input 
               v-model="studentLoginForm.username" 
-              placeholder="请输入学号" 
+              placeholder="请输入账号" 
               prefix-icon="el-icon-user"
               size="large">
             </el-input>

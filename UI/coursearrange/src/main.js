@@ -20,7 +20,7 @@ import {
   Submenu, Menu, MenuItem, MenuItemGroup, Input, Option, FormItem, TableColumn, Row,
   Icon, Dropdown, DropdownMenu, DropdownItem, Header, Aside, Main, Footer, Popover, Upload,
   MessageBox, Col, Cascader, Image, Link, InputNumber, Progress, Avatar, Card, DatePicker,
-  TimePicker, Empty, Loading, Timeline, TimelineItem, Tag, Calendar
+  TimePicker, Empty, Loading, Timeline, TimelineItem, Tag, Calendar, Alert
 } from 'element-ui';
 
 Vue.config.productionTip = false;
@@ -79,6 +79,7 @@ Vue.use(Timeline);
 Vue.use(TimelineItem);
 Vue.use(Tag);
 Vue.use(Calendar);
+Vue.use(Alert);
 Vue.use(Loading.directive);
 
 
