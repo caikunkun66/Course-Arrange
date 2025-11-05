@@ -786,7 +786,14 @@ export default {
         .delete("/student/delete/" + id)
         .then(res => {
           this.$message({ message: "删除成功", type: "success" })
-          this.allStudent()
+          // 根据当前筛选条件重新加载列表
+          if (!this.isAdmin && this.currentTeacherId) {
+            this.loadMyStudents()
+          } else if (this.value3) {
+            this.queryStudentByTeacher()
+          } else {
+            this.allStudent()
+          }
         })
         .catch(error => {
           this.$message.error("删除失败")
@@ -798,7 +805,8 @@ export default {
      */
     editById(index, row) {
       let modifyId = row.id
-      this.editFormData = row
+      // 使用深拷贝避免直接修改原对象
+      this.editFormData = JSON.parse(JSON.stringify(row))
       this.visibleForm = true
     },
 
@@ -810,8 +818,15 @@ export default {
         .post("/student/modify/" + this.editFormData.id, modifyData)
         .then(res => {
           this.$message({ message: "更新成功", type: "success" })
-          this.allStudent()
           this.visibleForm = false
+          // 根据当前筛选条件重新加载列表
+          if (!this.isAdmin && this.currentTeacherId) {
+            this.loadMyStudents()
+          } else if (this.value3) {
+            this.queryStudentByTeacher()
+          } else {
+            this.allStudent()
+          }
         })
         .catch(error => {
           this.$message.error("更新失败")
