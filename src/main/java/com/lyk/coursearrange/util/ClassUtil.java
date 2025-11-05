@@ -13,7 +13,7 @@ import java.util.*;
  * 固定时间：1
  * 年级编号：2
  * 班级编号：8
- * 讲师编号：5
+ * 教师编号：5
  * 课程编号：6
  * 课程属性：2
  * 上课时间：2
@@ -38,7 +38,7 @@ public class ClassUtil {
             case ConstantInfo.CLASS_NO:
                 return source.substring(3, 11); // 班级编号 11
             case ConstantInfo.TEACHER_NO:
-                return source.substring(11, 16); // 讲师编号 5
+                return source.substring(11, 16); // 教师编号 5
             case ConstantInfo.COURSE_NO:
                 return source.substring(16, 22); // 课程编号 6
             case ConstantInfo.COURSE_ATTR:
@@ -55,8 +55,8 @@ public class ClassUtil {
     public static Boolean judgeTime(String time, String gene, List<String> geneList) {
 
         for (String str : geneList) {
-            // 讲师--时间    班级--时间
-            // 得到遍历编码中的讲师、班级编号
+            // 教师--时间    班级--时间
+            // 得到遍历编码中的教师、班级编号
             String teacherNo = cutGene(ConstantInfo.TEACHER_NO, str);
             String classNo = cutGene(ConstantInfo.CLASS_NO, str);
             String classTime = cutGene(ConstantInfo.CLASS_TIME, str);
@@ -98,7 +98,7 @@ public class ClassUtil {
 //            }
 
             /*
-            // 判断班级编号是否相等，这种情况下只是处理了同班上课时间不冲突的情况，还有同讲师同一时间的未处理
+            // 判断班级编号是否相等，这种情况下只是处理了同班上课时间不冲突的情况，还有同教师同一时间的未处理
             if (classNo.equals(cutGene(ConstantInfo.CLASS_NO, str))) {
                 // 在班级编号相等的情况下再看看上课时间是否相等,不相等就返回true
                 String classTime = cutGene(ConstantInfo.CLASS_TIME, str);

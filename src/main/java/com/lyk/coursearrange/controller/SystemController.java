@@ -35,7 +35,7 @@ public class SystemController {
     public ServerResponse systemData() {
         Map<String, Object> map = new HashMap<>();
 
-        // 讲师人数
+        // 教师人数
         int teachers = teacherService.count();
         // 学生人数
         int students = studentService.count();
@@ -49,7 +49,7 @@ public class SystemController {
 
         // 昨日学生注册人数
         int studentReg = studentDao.studentReg(yesday);
-        // 昨日注册讲师
+        // 昨日注册教师
         int teacherReg = teacherDao.teacherReg(yesday);
 
 

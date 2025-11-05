@@ -100,7 +100,7 @@
               </li>
               <li>
                 <a href="#">
-                  <strong>讲师招募</strong>
+                  <strong>教师招募</strong>
                 </a>
               </li>
             </ul>

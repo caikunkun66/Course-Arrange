@@ -44,7 +44,7 @@ public class TeacherController {
 
 
     /**
-     * 讲师登录
+     * 教师登录
      * @param userLoginRequest
      * @return
      */
@@ -76,7 +76,7 @@ public class TeacherController {
     }
 
     /**
-     * 根据id查询讲师，用于更新操作
+     * 根据id查询教师，用于更新操作
      * @param id
      * @return
      */
@@ -87,7 +87,7 @@ public class TeacherController {
     }
 
     /**
-     * 更新讲师
+     * 更新教师
      * @param teacher
      * @return
      */
@@ -103,7 +103,7 @@ public class TeacherController {
     }
 
     /**
-     * 分页查询讲师
+     * 分页查询教师
      * @param page
      * @param limit
      * @return
@@ -118,7 +118,7 @@ public class TeacherController {
     }
 
     /**
-     * 根据用户名关键字搜索讲师
+     * 根据用户名关键字搜索教师
      * @return
      */
     @GetMapping("/search/{page}/{keyword}")
@@ -136,7 +136,7 @@ public class TeacherController {
     }
 
     /**
-     * 管理员根据ID删除讲师
+     * 管理员根据ID删除教师
      * @return
      */
     @DeleteMapping("/delete/{id}")
@@ -150,7 +150,7 @@ public class TeacherController {
 
 
     /**
-     * 管理员添加讲师,默认密码是123456
+     * 管理员添加教师,默认密码是123456
      * @param t
      * @return
      */
@@ -158,19 +158,19 @@ public class TeacherController {
     public ServerResponse addTeacher(@RequestBody TeacherAddRequest t) {
         Teacher teacher = new Teacher();
         teacher.setUsername(t.getUsername());
-        // 每一个新增的讲师密码默认是123456
+        // 每一个新增的教师密码默认是123456
         teacher.setPassword("123456");
         teacher.setTeach(t.getTeach());
         teacher.setAddress(t.getAddress());
         boolean b = teacherService.save(teacher);
         if (b) {
-            return ServerResponse.ofSuccess("添加讲师成功！");
+            return ServerResponse.ofSuccess("添加教师成功！");
         }
-        return ServerResponse.ofError("添加讲师失败！");
+        return ServerResponse.ofError("添加教师失败！");
     }
 
     /**
-     * 根据ID封禁、解封讲师账号，状态为0时正常，1时封禁
+     * 根据ID封禁、解封教师账号，状态为0时正常，1时封禁
      * @param id
      * @return
      */
@@ -214,7 +214,7 @@ public class TeacherController {
     }
 
     /**
-     * 查询所有讲师
+     * 查询所有教师
      * @return
      */
     @GetMapping("/all")

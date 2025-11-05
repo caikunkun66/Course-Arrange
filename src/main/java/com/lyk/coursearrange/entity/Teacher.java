@@ -26,7 +26,7 @@ public class Teacher extends Model<Teacher> {
     private static final long serialVersionUID=1L;
 
     /**
-     * id，讲师表
+     * id，教师表
      */
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;

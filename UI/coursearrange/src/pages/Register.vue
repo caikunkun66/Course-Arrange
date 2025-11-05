@@ -81,12 +81,12 @@ export default {
   },
 
   computed: {
-    // 根据 URL 参数判断是讲师注册还是学生注册
+    // 根据 URL 参数判断是教师注册还是学生注册
     isTeacherRegister() {
       return this.$route.query.role === 'teacher';
     },
     registerTitle() {
-      return this.isTeacherRegister ? '讲师注册' : '学生注册';
+      return this.isTeacherRegister ? '教师注册' : '学生注册';
     },
     usernamePlaceholder() {
       return this.isTeacherRegister ? '请输入教工号（用于登录）' : '请输入昵称（用于登录）';
@@ -98,7 +98,7 @@ export default {
     hasNo() {
       // 已经有账号，跳转到登录界面
       if (this.isTeacherRegister) {
-        // 讲师跳转到管理员登录页
+        // 教师跳转到管理员登录页
         this.$router.push({ path: '/admin/login', query: { type: 'teacher' } });
       } else {
         // 学生跳转到学生登录页
@@ -114,7 +114,7 @@ export default {
         
         // 根据角色选择不同的注册接口
         const registerUrl = this.isTeacherRegister ? '/teacher/register' : '/student/register';
-        const roleText = this.isTeacherRegister ? '讲师' : '学生';
+        const roleText = this.isTeacherRegister ? '教师' : '学生';
         
         // 进行注册， 携带填写的注册信息给后台
         this.$axios.post(registerUrl, {

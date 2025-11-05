@@ -64,7 +64,7 @@
               </el-radio>
               <el-radio label="2" class="type-radio">
                 <span class="radio-icon">👨‍🏫</span>
-                <span>讲师</span>
+                <span>教师</span>
               </el-radio>
             </el-radio-group>
           </el-form-item>
@@ -83,7 +83,7 @@
           <div class="register-entry">
             <router-link class="register-link" :to="{ path: '/student/register', query: { role: 'teacher' } }">
               <span>还没有账号？</span>
-              <span class="link-text">讲师注册</span>
+              <span class="link-text">教师注册</span>
             </router-link>
           </div>
         </el-form>
@@ -118,7 +118,7 @@ export default {
   },
   computed: {
     loginTypeTitle() {
-      return this.radio === '1' ? '管理员登录' : '讲师登录';
+      return this.radio === '1' ? '管理员登录' : '教师登录';
     }
   },
   mounted() {
@@ -182,16 +182,16 @@ export default {
             this.$message.error("登录失败: " + error.message)
           });
         } else if(this.radio == 2) {
-          // 讲师登录
+          // 教师登录
           const loginUrl = '/teacher/login';
-          console.log('准备发送讲师登录请求到:', loginUrl);
+          console.log('准备发送教师登录请求到:', loginUrl);
           
           this.$axios.post(loginUrl, {
             username: this.adminLoginForm.username,
             password: this.adminLoginForm.password
           })
           .then(res => {
-            console.log('讲师登录响应:', res);
+            console.log('教师登录响应:', res);
             if (res.data.code == 0) {
               let ret = res.data.data
               window.localStorage.setItem('token', ret.token)
@@ -206,7 +206,7 @@ export default {
               this.adminLoginForm.password = ''
             }
           }).catch((error) => {
-            console.error('讲师登录请求失败:', error);
+            console.error('教师登录请求失败:', error);
             this.$message.error("登录失败: " + error.message)
           });
         }

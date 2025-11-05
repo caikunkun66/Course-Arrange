@@ -31,7 +31,7 @@
 //        teacher.setUsername("msLi");
 //        teacher.setPassword("123");
 //        teacher.setRealname("李雪雪");
-//        teacher.setJobtitle("高级讲师");
+//        teacher.setJobtitle("高级教师");
 //        teacher.setTeach("语文");
 //        teacher.setAge(29);
 //        teacher.setTelephone("18978899898");

@@ -24,7 +24,7 @@ public class OSSController {
      * 上传头像
      * @param file
      * @param id 用户id
-     * @param type 用户类型，1：管理员，2：讲师，3：学生
+     * @param type 用户类型，1：管理员，2：教师，3：学生
      * @return
      */
     @PostMapping("/avatar")
@@ -36,7 +36,7 @@ public class OSSController {
      * 上传课程
      * @param file
      * @param id 用户id
-     * @param type 用户类型，1：管理员，2：讲师
+     * @param type 用户类型，1：管理员，2：教师
      * @return
      */
     @PostMapping("/video")

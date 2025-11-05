@@ -127,7 +127,7 @@ CREATE TABLE `tb_student_course`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `tb_teacher`;
 CREATE TABLE `tb_teacher`  (
-  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'id，讲师表',
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'id，教师表',
   `username` varchar(36) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '昵称（用户名）',
   `password` varchar(36) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '密码',
   `user_type` tinyint(1) NOT NULL DEFAULT 2 COMMENT '用户类型',

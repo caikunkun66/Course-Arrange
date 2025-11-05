@@ -52,7 +52,7 @@ public class TokenService {
     }
 
     /**
-     * 验证讲师
+     * 验证教师
      * @param teacher
      * @return
      */

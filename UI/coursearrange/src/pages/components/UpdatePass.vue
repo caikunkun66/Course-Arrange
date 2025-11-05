@@ -1,5 +1,5 @@
 <template>
-  <!-- 讲师修改密码页面 -->
+  <!-- 教师修改密码页面 -->
   <div class="update-form">
     <el-form ref="formRef" :model="passForm" :rules="formRules">
       <el-form-item prop="oldPass">
@@ -88,9 +88,9 @@ export default {
 
   methods: {
 
-    // 获取用户类别，1管理员，2讲师，3学生
+    // 获取用户类别，1管理员，2教师，3学生
     getUserType() {
-      // 讲师
+      // 教师
       let teacher = window.localStorage.getItem('teacher')
       // 管理员
       let admin = window.localStorage.getItem('admin')
@@ -102,7 +102,7 @@ export default {
         this.userType = (JSON.parse(admin)).userType
         this.passForm.id = (JSON.parse(admin)).id
       } else if (teacher != null){
-        // 讲师2
+        // 教师2
         this.userType = (JSON.parse(teacher)).userType
         this.passForm.id = (JSON.parse(teacher)).id
       } else {
@@ -130,7 +130,7 @@ export default {
         let url = "/admin/password"
         this.postForm(url)
       } else if (this.userType == 2) {
-        // 讲师修改密码
+        // 教师修改密码
         let url = "/teacher/password"
         this.postForm(url)
       } else if (this.userType == 3) {
