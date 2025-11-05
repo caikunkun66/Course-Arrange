@@ -36,7 +36,31 @@
               </span>
             </div>
             
-            <!-- 学生选择器（仅教师可见） -->
+            <!-- 教师选择器（仅管理员可见） -->
+            <div v-if="isAdmin" class="teacher-selector">
+              <el-select
+                v-model="selectedTeacher"
+                placeholder="全部教师"
+                filterable
+                clearable
+                @change="handleTeacherChange"
+                size="small"
+              >
+                <el-option
+                  v-for="teacher in teacherList"
+                  :key="teacher.id"
+                  :label="teacher.username"
+                  :value="teacher.id"
+                >
+                  <span style="float: left">{{ teacher.username }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">
+                    {{ teacher.teach || '未设置科目' }}
+                  </span>
+                </el-option>
+              </el-select>
+            </div>
+            
+            <!-- 学生选择器（管理员和教师可见） -->
             <div v-if="!isStudent" class="student-selector">
               <el-select
                 v-model="selectedStudent"
@@ -433,9 +457,11 @@ export default {
     return {
       // 用户角色标识
       isStudent: false, // 是否为学生角色
+      isAdmin: false, // 是否为管理员角色
       currentStudent: null, // 当前登录的学生信息
       
       // 筛选条件
+      selectedTeacher: null, // 选中的教师（管理员使用）
       selectedStudent: null,
       selectedMonth: null,
       calendarValue: new Date(),
@@ -734,16 +760,23 @@ export default {
     checkUserRole() {
       const studentStr = localStorage.getItem('student');
       const teacherStr = localStorage.getItem('teacher');
+      const adminStr = localStorage.getItem('admin');
       
       if (studentStr) {
         // 学生角色
         this.isStudent = true;
+        this.isAdmin = false;
         this.currentStudent = JSON.parse(studentStr);
         this.selectedStudent = this.currentStudent.id; // 自动选中当前学生
       } else if (teacherStr) {
         // 教师角色
         this.isStudent = false;
+        this.isAdmin = false;
         this.currentTeacher = JSON.parse(teacherStr);
+      } else if (adminStr) {
+        // 管理员角色
+        this.isStudent = false;
+        this.isAdmin = true;
       }
     },
     
@@ -774,13 +807,25 @@ export default {
             // 丰富学生数据，添加教师名称
             this.enrichStudentData();
           }
-        } else {
-          // 如果不是教师也不是学生，可能是管理员，加载所有学生
-          const res = await this.$axios.get('/student/students/1');
-          if (res.data.code === 0) {
-            this.studentList = res.data.data.records || res.data.data || [];
-            // 丰富学生数据，添加教师名称
-            this.enrichStudentData();
+        } else if (this.isAdmin) {
+          // 管理员角色
+          if (this.selectedTeacher) {
+            // 如果选择了教师，只加载该教师的学生
+            const url = `/teacher/students/${this.selectedTeacher}/1`;
+            const res = await this.$axios.get(url);
+            if (res.data.code === 0) {
+              this.studentList = res.data.data.records || res.data.data || [];
+              // 丰富学生数据，添加教师名称
+              this.enrichStudentData();
+            }
+          } else {
+            // 未选择教师，加载所有学生
+            const res = await this.$axios.get('/student/students/1');
+            if (res.data.code === 0) {
+              this.studentList = res.data.data.records || res.data.data || [];
+              // 丰富学生数据，添加教师名称
+              this.enrichStudentData();
+            }
           }
         }
       } catch (error) {
@@ -854,21 +899,37 @@ export default {
       this.handleMonthChange();
     },
     
+    // 教师选择变化（仅管理员）
+    async handleTeacherChange() {
+      // 清空已选择的学生
+      this.selectedStudent = null;
+      // 重新加载该教师的学生列表（等待完成）
+      await this.loadStudents();
+      // 重新加载课程
+      await this.loadMonthCourses();
+    },
+    
     // 学生选择变化
     handleStudentChange() {
       this.loadMonthCourses();
     },
     
     // 重置搜索条件
-    handleReset() {
+    async handleReset() {
+      // 清空选中的教师（管理员）
+      this.selectedTeacher = null;
       // 清空选中的学生
       this.selectedStudent = null;
       // 重置月份为当前月份
       this.initSelectedMonth();
       // 重置日历显示
       this.calendarValue = new Date();
+      // 重新加载学生列表（管理员需要）
+      if (this.isAdmin) {
+        await this.loadStudents();
+      }
       // 重新加载课程数据
-      this.loadMonthCourses();
+      await this.loadMonthCourses();
     },
     
     // 加载月度课程
@@ -894,7 +955,7 @@ export default {
             this.courseList = res.data.data || [];
           }
         }
-        // 教师角色：如果选择了特定学生，只查询该学生的课程
+        // 选择了特定学生：只查询该学生的课程
         else if (this.selectedStudent) {
           const res = await this.$axios.get(`/student-course/${this.selectedStudent}`, {
             params: { startDate, endDate }
@@ -903,13 +964,9 @@ export default {
             this.courseList = res.data.data || [];
           }
         } else {
-          // 教师角色且未选择学生：查询当前教师所有学生的课程
-          if (!this.currentTeacher) {
-            this.$message.warning('未获取到教师信息');
-            return;
-          }
-          
-          // 获取当前教师的所有学生
+          // 未选择学生：查询所有学生的课程
+          // 教师角色：只查询自己的学生
+          // 管理员角色：查询所有学生
           const allCourses = [];
           for (const student of this.studentList) {
             try {
@@ -1577,6 +1634,26 @@ export default {
         }
       }
       
+      // 教师选择器（管理员）
+      .teacher-selector {
+        /deep/ .el-select {
+          width: 220px;
+          
+          .el-input__inner {
+            height: 38px;
+            line-height: 38px;
+            font-size: 15px;
+            border-radius: 6px;
+          }
+          
+          .el-input__suffix {
+            .el-input__icon {
+              line-height: 38px;
+            }
+          }
+        }
+      }
+      
       // 学生选择器
       .student-selector {
         /deep/ .el-select {
@@ -2092,6 +2169,18 @@ export default {
           }
         }
         
+        .teacher-selector {
+          /deep/ .el-select {
+            width: 180px;
+            
+            .el-input__inner {
+              height: 34px;
+              line-height: 34px;
+              font-size: 14px;
+            }
+          }
+        }
+        
         .student-selector {
           /deep/ .el-select {
             width: 180px;
@@ -2211,6 +2300,20 @@ export default {
                 i {
                   font-size: 16px;
                 }
+              }
+            }
+          }
+          
+          .teacher-selector {
+            width: 100%;
+            
+            /deep/ .el-select {
+              width: 100%;
+              
+              .el-input__inner {
+                height: 36px;
+                line-height: 36px;
+                font-size: 15px;
               }
             }
           }
