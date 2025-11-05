@@ -5,7 +5,7 @@
       <el-input placeholder="搜索学生" v-model="keyword" @clear="inputListener" clearable style="max-width: 400px;">
       </el-input>
       <!-- 管理员可以按教师筛选 -->
-      <el-select v-if="isAdmin" v-model="value3" placeholder="教师" @change="queryStudentByTeacher" @clear="teacherListener" clearable>
+      <el-select v-if="isAdmin" v-model="value3" placeholder="教师" @clear="teacherListener" clearable>
         <el-option
           v-for="item in teacherList"
           :key="item.value"
@@ -549,24 +549,19 @@ export default {
         })
     },
 
-    // 根据教师查询学生
+    // 根据教师查询学生（保留关键字搜索）
     queryStudentByTeacher() {
       if (!this.value3) {
-        this.allStudent()
+        // 如果清空了教师筛选，检查是否还有关键字
+        if (this.keyword) {
+          this.performSearch(null, this.keyword)
+        } else {
+          this.allStudent()
+        }
         return
       }
-      this.$axios
-        .get(`/student/teacher/${this.value3}/${this.page}`)
-        .then(res => {
-          if (res.data.code == 0) {
-            let ret = res.data.data
-            this.enrichStudentData(ret.records)
-            this.total = ret.total
-          }
-        })
-        .catch(error => {
-          this.$message.error("查询失败")
-        })
+      // 使用统一的搜索方法，支持组合条件
+      this.performSearch(this.value3, this.keyword)
     },
 
     // 丰富学生数据（添加教师名称）
@@ -598,9 +593,17 @@ export default {
 
     },
 
-    // 清空教师筛选
+    // 清空教师筛选（不立即查询，等待用户点击搜索按钮）
     teacherListener() {
-      this.allStudent()
+      // 清空教师筛选后，如果关键字为空，则重置列表
+      if (!this.keyword) {
+        if (this.isAdmin) {
+          this.allStudent()
+        } else {
+          this.loadMyStudents()
+        }
+      }
+      // 如果有关键字，则不做任何操作，等待用户点击搜索按钮
     },
 
     // 查询班级信息
@@ -650,12 +653,15 @@ export default {
     },
 
     inputListener() {
-      // 清空搜索时根据用户类型加载数据
-      if (!this.isAdmin && this.currentTeacherId) {
-        this.loadMyStudents()
-      } else {
-        this.allStudent()
+      // 清空搜索关键字后，如果没有教师筛选，则重置列表
+      if (!this.value3) {
+        if (!this.isAdmin && this.currentTeacherId) {
+          this.loadMyStudents()
+        } else {
+          this.allStudent()
+        }
       }
+      // 如果有教师筛选，则不做任何操作，等待用户点击搜索按钮
     },
 
     /**
@@ -676,36 +682,75 @@ export default {
     },
 
     /**
-     * 关键字查询学生
+     * 关键字查询学生（支持组合条件）
      */
     searchStudent() {
-      if (!this.keyword) {
-        this.$message.warning("请输入搜索关键字")
+      // 如果没有任何搜索条件，显示所有学生
+      if (!this.keyword && !this.value3) {
+        if (this.isAdmin) {
+          this.allStudent()
+        } else {
+          this.loadMyStudents()
+        }
         return
       }
-      
+
       // 教师只能搜索自己的学生
       if (!this.isAdmin && this.currentTeacherId) {
-        this.$axios
-          .get("/student/search/" + this.keyword)
-          .then(res => {
-            let ret = res.data.data
-            // 过滤只显示属于当前教师的学生
-            if (ret.records) {
-              ret.records = ret.records.filter(student => student.teacherId === this.currentTeacherId)
-              ret.total = ret.records.length
-            }
-            this.enrichStudentData(ret.records)
-            this.total = ret.total
-            this.$message({ message: "查询成功", type: "success" })
-          })
-          .catch(error => {
-            this.$message.error("查询失败")
-          });
+        this.performSearch(this.currentTeacherId, this.keyword)
       } else {
-        // 管理员可以搜索所有学生
+        // 管理员可以组合搜索
+        this.performSearch(this.value3, this.keyword)
+      }
+    },
+
+    /**
+     * 执行搜索（支持教师ID和关键字组合）
+     */
+    performSearch(teacherId, keyword) {
+      // 情况1：有教师筛选 + 有关键字 -> 组合搜索
+      if (teacherId && keyword) {
         this.$axios
-          .get("/student/search/" + this.keyword)
+          .get(`/student/teacher/${teacherId}/${this.page}`)
+          .then(res => {
+            if (res.data.code == 0) {
+              let ret = res.data.data
+              // 在教师的学生中根据关键字过滤
+              if (ret.records) {
+                ret.records = ret.records.filter(student => 
+                  student.username && student.username.toLowerCase().includes(keyword.toLowerCase())
+                )
+                ret.total = ret.records.length
+              }
+              this.enrichStudentData(ret.records)
+              this.total = ret.total
+              this.$message({ message: "查询成功", type: "success" })
+            }
+          })
+          .catch(error => {
+            this.$message.error("查询失败")
+          })
+      }
+      // 情况2：只有教师筛选 -> 按教师查询
+      else if (teacherId && !keyword) {
+        this.$axios
+          .get(`/student/teacher/${teacherId}/${this.page}`)
+          .then(res => {
+            if (res.data.code == 0) {
+              let ret = res.data.data
+              this.enrichStudentData(ret.records)
+              this.total = ret.total
+              this.$message({ message: "查询成功", type: "success" })
+            }
+          })
+          .catch(error => {
+            this.$message.error("查询失败")
+          })
+      }
+      // 情况3：只有关键字 -> 按关键字查询
+      else if (!teacherId && keyword) {
+        this.$axios
+          .get("/student/search/" + keyword)
           .then(res => {
             let ret = res.data.data
             this.enrichStudentData(ret.records)
@@ -714,7 +759,7 @@ export default {
           })
           .catch(error => {
             this.$message.error("查询失败")
-          });
+          })
       }
     },
 
