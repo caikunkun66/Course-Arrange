@@ -8,10 +8,10 @@
       </div>
 
       <el-form class="register-form" ref="regFormRef" :model="studentRegForm" :rules="studentRegRules">
-        <h3>学生注册</h3>
+        <h3>{{ registerTitle }}</h3>
         <!-- 用户名/昵称 -->        
         <el-form-item prop="username">
-        <el-input placeholder="请输入昵称（用于登录）"  v-model="studentRegForm.username" clearable></el-input>
+        <el-input :placeholder="usernamePlaceholder"  v-model="studentRegForm.username" clearable></el-input>
         </el-form-item>
         <!-- 密码 -->
         <el-form-item prop="password">
@@ -80,11 +80,30 @@ export default {
     }
   },
 
+  computed: {
+    // 根据 URL 参数判断是讲师注册还是学生注册
+    isTeacherRegister() {
+      return this.$route.query.role === 'teacher';
+    },
+    registerTitle() {
+      return this.isTeacherRegister ? '讲师注册' : '学生注册';
+    },
+    usernamePlaceholder() {
+      return this.isTeacherRegister ? '请输入教工号（用于登录）' : '请输入昵称（用于登录）';
+    }
+  },
+
   methods: {
 
     hasNo() {
       // 已经有账号，跳转到登录界面
-      window.location.href="http://localhost:8081/#/student/login"
+      if (this.isTeacherRegister) {
+        // 讲师跳转到管理员登录页
+        this.$router.push({ path: '/admin/login', query: { type: 'teacher' } });
+      } else {
+        // 学生跳转到学生登录页
+        window.location.href="http://localhost:8081/#/student/login"
+      }
     },
 
     // 注册按钮方法
@@ -92,16 +111,26 @@ export default {
       // 进行表单预验证
       this.$refs.regFormRef.validate(valid => {
         if (!valid) return;
+        
+        // 根据角色选择不同的注册接口
+        const registerUrl = this.isTeacherRegister ? '/teacher/register' : '/student/register';
+        const roleText = this.isTeacherRegister ? '讲师' : '学生';
+        
         // 进行注册， 携带填写的注册信息给后台
-        this.$axios.post('/student/register', {
+        this.$axios.post(registerUrl, {
           username: this.studentRegForm.username,
           password: this.studentRegForm.password
         })
         .then(res => {
           // 注册成功
           if (res.data.code == 0) {
-            this.$message.success('注册成功，请用昵称登录系统')
-            this.$router.push('/student/login')
+            this.$message.success(`${roleText}注册成功，请登录系统`)
+            // 根据角色跳转到不同的登录页
+            if (this.isTeacherRegister) {
+              this.$router.push({ path: '/admin/login', query: { type: 'teacher' } });
+            } else {
+              this.$router.push('/student/login')
+            }
           } else {
             this.$message.error(res.data.message || '注册失败')
           }

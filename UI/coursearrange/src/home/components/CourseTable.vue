@@ -118,7 +118,7 @@ export default {
               index = index - 1;
             } else {
               this.classTableData.courses[level].push(
-                item.teacher.realname +
+                item.teacher.username +
                   "-" +
                   item.courseInfo.courseName +
                   "(" +

@@ -36,8 +36,8 @@
               </span>
             </div>
             
-            <!-- 学生选择器 -->
-            <div class="student-selector">
+            <!-- 学生选择器（仅教师可见） -->
+            <div v-if="!isStudent" class="student-selector">
               <el-select
                 v-model="selectedStudent"
                 placeholder="全部学生"
@@ -60,10 +60,15 @@
               </el-select>
             </div>
             
+            <!-- 当前学生信息（仅学生可见） -->
+            <div v-if="isStudent" class="current-student-info">
+              <span class="student-name">{{ currentStudent ? currentStudent.username : '学生' }} 的课程表</span>
+            </div>
+            
             <!-- 操作按钮 -->
             <div class="action-buttons">
               <el-button type="primary" icon="el-icon-refresh" size="small" @click="handleReset" circle title="重置"></el-button>
-              <el-button type="success" icon="el-icon-plus" size="small" @click="openAddDialog" circle title="添加课程"></el-button>
+              <el-button v-if="!isStudent" type="success" icon="el-icon-plus" size="small" @click="openAddDialog" circle title="添加课程"></el-button>
             </div>
           </div>
           
@@ -73,7 +78,7 @@
               <div class="stat-label">本月课程</div>
               <div class="stat-value">{{ monthCoursesCount }}</div>
             </div>
-            <div class="stat-item">
+            <div v-if="!isStudent" class="stat-item">
               <div class="stat-label">本月学生</div>
               <div class="stat-value">{{ monthStudentsCount }}</div>
             </div>
@@ -94,7 +99,7 @@
               <div class="day-number" :class="{'today': isToday(data.day), 'selected-month': isSelectedMonth(data.day)}">
                 <span class="day-text">{{ data.day.split('-').slice(2).join('-') }}</span>
                 <button 
-                  v-if="isSelectedMonth(data.day)"
+                  v-if="!isStudent && isSelectedMonth(data.day)"
                   class="add-course-btn" 
                   @click.stop="openAddDialogForDate(data.day)"
                   title="添加课程"
@@ -113,7 +118,7 @@
                 >
                   <span class="course-time">{{ course.startTime }}-{{ course.endTime }}</span>
                   <span class="course-student">{{ getStudentName(course.studentId) }}</span>
-                  <span class="course-actions">
+                  <span v-if="!isStudent" class="course-actions">
                     <el-button
                       v-if="getCourseStatus(course) === 'pending'"
                       type="success"
@@ -171,13 +176,13 @@
       </div>
       <div slot="footer">
         <el-button @click="detailDialogVisible = false">关闭</el-button>
-        <el-button type="primary" @click="editCourseFromDetail">编辑</el-button>
+        <el-button v-if="!isStudent" type="primary" @click="editCourseFromDetail">编辑</el-button>
         <el-button 
-          v-if="selectedCourse && getCourseStatus(selectedCourse) === 'pending'"
+          v-if="!isStudent && selectedCourse && getCourseStatus(selectedCourse) === 'pending'"
           type="warning" 
           @click="markCourseCancel(selectedCourse)"
         >取消课程</el-button>
-        <el-button type="danger" @click="deleteCourseFromDetail">删除</el-button>
+        <el-button v-if="!isStudent" type="danger" @click="deleteCourseFromDetail">删除</el-button>
       </div>
     </el-dialog>
 
@@ -194,13 +199,13 @@
           :timestamp="course.startTime + ' - ' + course.endTime"
           placement="top"
         >
-          <el-card shadow="hover" class="course-card-small">
+            <el-card shadow="hover" class="course-card-small">
             <div class="course-header-small">
               <div>
                 <el-tag size="small" type="primary">{{ getStudentName(course.studentId) }}</el-tag>
                 <span style="margin-left: 10px; font-weight: bold;">{{ course.courseName }}</span>
               </div>
-              <div>
+              <div v-if="!isStudent">
                 <el-button size="mini" type="text" icon="el-icon-edit" @click="editCourse(course)">编辑</el-button>
                 <el-button size="mini" type="text" icon="el-icon-delete" style="color: #f56c6c;" @click="deleteCourse(course)">删除</el-button>
               </div>
@@ -426,6 +431,10 @@ export default {
   name: 'TrainingSchedule',
   data() {
     return {
+      // 用户角色标识
+      isStudent: false, // 是否为学生角色
+      currentStudent: null, // 当前登录的学生信息
+      
       // 筛选条件
       selectedStudent: null,
       selectedMonth: null,
@@ -577,7 +586,7 @@ export default {
   },
   
   async mounted() {
-    this.loadCurrentTeacher();
+    this.checkUserRole();
     this.initSelectedMonth();
     await this.loadInitialData();
     // 等待初始数据加载完成后再加载课程
@@ -720,12 +729,21 @@ export default {
       const month = String(now.getMonth() + 1).padStart(2, '0');
       this.selectedMonth = `${year}-${month}`;
     },
-    // 加载当前登录教师信息
-    loadCurrentTeacher() {
+    
+    // 检查用户角色
+    checkUserRole() {
+      const studentStr = localStorage.getItem('student');
       const teacherStr = localStorage.getItem('teacher');
-      if (teacherStr) {
+      
+      if (studentStr) {
+        // 学生角色
+        this.isStudent = true;
+        this.currentStudent = JSON.parse(studentStr);
+        this.selectedStudent = this.currentStudent.id; // 自动选中当前学生
+      } else if (teacherStr) {
+        // 教师角色
+        this.isStudent = false;
         this.currentTeacher = JSON.parse(teacherStr);
-        console.log('当前教师信息:', this.currentTeacher);
       }
     },
     
@@ -739,6 +757,14 @@ export default {
     // 加载学生列表
     async loadStudents() {
       try {
+        // 如果是学生角色，只加载自己的信息
+        if (this.isStudent && this.currentStudent) {
+          this.studentList = [this.currentStudent];
+          this.enrichStudentData();
+          return;
+        }
+        
+        // 教师角色的逻辑
         const userInfo = JSON.parse(localStorage.getItem('user'));
         let url = '/student/students/1';
         
@@ -855,8 +881,17 @@ export default {
         const lastDay = new Date(year, month, 0).getDate();
         const endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
         
-        // 如果选择了特定学生，只查询该学生的课程
-        if (this.selectedStudent) {
+        // 学生角色：只查询自己的课程
+        if (this.isStudent && this.currentStudent) {
+          const res = await this.$axios.get(`/student-course/${this.currentStudent.id}`, {
+            params: { startDate, endDate }
+          });
+          if (res.data && res.data.code === 0) {
+            this.courseList = res.data.data || [];
+          }
+        }
+        // 教师角色：如果选择了特定学生，只查询该学生的课程
+        else if (this.selectedStudent) {
           const res = await this.$axios.get(`/student-course/${this.selectedStudent}`, {
             params: { startDate, endDate }
           });
@@ -864,7 +899,7 @@ export default {
             this.courseList = res.data.data || [];
           }
         } else {
-          // 查询当前教师所有学生的课程
+          // 教师角色且未选择学生：查询当前教师所有学生的课程
           if (!this.currentTeacher) {
             this.$message.warning('未获取到教师信息');
             return;
@@ -1558,6 +1593,23 @@ export default {
         }
       }
       
+      // 当前学生信息（学生端显示）
+      .current-student-info {
+        display: flex;
+        align-items: center;
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        
+        .student-name {
+          font-size: 15px;
+          font-weight: 600;
+          color: #ffffff;
+          letter-spacing: 0.5px;
+        }
+      }
+      
       // 操作按钮
       .action-buttons {
         display: flex;
@@ -2048,6 +2100,14 @@ export default {
           }
         }
         
+        .current-student-info {
+          padding: 6px 12px;
+          
+          .student-name {
+            font-size: 14px;
+          }
+        }
+        
         .action-buttons {
           gap: 6px;
           
@@ -2162,6 +2222,16 @@ export default {
                 line-height: 36px;
                 font-size: 15px;
               }
+            }
+          }
+          
+          .current-student-info {
+            width: 100%;
+            padding: 8px 16px;
+            justify-content: center;
+            
+            .student-name {
+              font-size: 15px;
             }
           }
           

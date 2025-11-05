@@ -6,7 +6,6 @@ import Register from '@/pages/Register';
 import Admin from '@/pages/Admin';
 import ManagerMain from '@/manager/ManagerMain';
 import CourseTable from '@/manager/components/CourseTable';
-import StudentCourseTable from '@/home/components/CourseTable';
 import StudentCenter from '@/home/components/StudentCenter';
 import StudentPassword from '@/home/components/Password';
 import StudentList from '@/manager/components/StudentList';
@@ -59,12 +58,12 @@ const router = new Router({
         {
           path: '',
           name: 'Student',
-          component: StudentCourseTable
+          component: CourseTable
         },
         {
           path: '/courseList',
           name: 'CourseList',
-          component: StudentCourseTable
+          component: CourseTable
         },
         {
           path: '/center',
