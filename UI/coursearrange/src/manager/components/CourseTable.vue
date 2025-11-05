@@ -260,11 +260,16 @@
             :disabled="!!selectedStudent"
           >
             <el-option
-              v-for="student in studentList"
+              v-for="student in filteredStudentList"
               :key="student.id"
               :label="student.username"
               :value="student.id"
-            ></el-option>
+            >
+              <span style="float: left">{{ student.username }}</span>
+              <span style="float: right; color: #8492a6; font-size: 13px">
+                {{ student.teacherName || '未分配' }}
+              </span>
+            </el-option>
           </el-select>
         </el-form-item>
 
@@ -288,14 +293,19 @@
                 filterable
                 clearable
                 style="width: 100%;"
-                :disabled="!isEdit && !!courseForm.teacherId"
+                :disabled="!isAdmin && !isEdit && !!courseForm.teacherId"
               >
                 <el-option
                   v-for="teacher in teacherList"
                   :key="teacher.id"
                   :label="teacher.username"
                   :value="teacher.id"
-                ></el-option>
+                >
+                  <span style="float: left">{{ teacher.username }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">
+                    {{ teacher.teach || '未设置科目' }}
+                  </span>
+                </el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -599,14 +609,55 @@ export default {
       const minutes = this.selectedStudentDuration * (this.courseForm.duration || 0);
       // 保留整数，因为分钟数通常不需要小数
       return Math.round(minutes);
+    },
+    
+    // 过滤后的学生列表（添加课程对话框中使用）
+    filteredStudentList() {
+      // 如果在表单中选择了教师，只显示该教师的学生
+      if (this.dialogVisible && this.courseForm.teacherId) {
+        return this.studentList.filter(s => s.teacherId === this.courseForm.teacherId);
+      }
+      // 否则显示所有学生
+      return this.studentList;
     }
   },
   
   watch: {
-    // 监听学生选择变化，重新计算结束时间
+    // 监听学生选择变化，重新计算结束时间并自动设置教师（仅管理员）
     'courseForm.studentId'(newVal) {
       if (newVal) {
         this.calculateEndTime();
+        
+        // 管理员选择学生后，自动设置该学生的授课教师
+        if (this.isAdmin && this.studentList.length > 0) {
+          const student = this.studentList.find(s => s.id === newVal);
+          if (student && student.teacherId) {
+            this.courseForm.teacherId = student.teacherId;
+            // 同时设置课程名称
+            const teacher = this.teacherList.find(t => t.id === student.teacherId);
+            if (teacher && teacher.teach) {
+              this.courseForm.courseName = teacher.teach;
+            }
+          }
+        }
+      }
+    },
+    
+    // 监听教师选择变化，自动填充课程名称（仅管理员）
+    'courseForm.teacherId'(newVal, oldVal) {
+      if (this.isAdmin && newVal && this.teacherList.length > 0) {
+        const teacher = this.teacherList.find(t => t.id === newVal);
+        if (teacher && teacher.teach) {
+          this.courseForm.courseName = teacher.teach;
+        }
+        
+        // 如果当前选择的学生不属于新选择的教师，清空学生选择
+        if (this.courseForm.studentId && oldVal !== newVal) {
+          const currentStudent = this.studentList.find(s => s.id === this.courseForm.studentId);
+          if (currentStudent && currentStudent.teacherId !== newVal) {
+            this.courseForm.studentId = null;
+          }
+        }
       }
     }
   },
