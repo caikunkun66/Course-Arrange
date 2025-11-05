@@ -650,7 +650,12 @@ export default {
     },
 
     inputListener() {
-      this.allStudent()
+      // 清空搜索时根据用户类型加载数据
+      if (!this.isAdmin && this.currentTeacherId) {
+        this.loadMyStudents()
+      } else {
+        this.allStudent()
+      }
     },
 
     /**
@@ -678,17 +683,39 @@ export default {
         this.$message.warning("请输入搜索关键字")
         return
       }
-      this.$axios
-        .get("/student/search/" + this.keyword)
-        .then(res => {
-          let ret = res.data.data
-          this.enrichStudentData(ret.records)
-          this.total = ret.total
-          this.$message({ message: "查询成功", type: "success" })
-        })
-        .catch(error => {
-          this.$message.error("查询失败")
-        });
+      
+      // 教师只能搜索自己的学生
+      if (!this.isAdmin && this.currentTeacherId) {
+        this.$axios
+          .get("/student/search/" + this.keyword)
+          .then(res => {
+            let ret = res.data.data
+            // 过滤只显示属于当前教师的学生
+            if (ret.records) {
+              ret.records = ret.records.filter(student => student.teacherId === this.currentTeacherId)
+              ret.total = ret.records.length
+            }
+            this.enrichStudentData(ret.records)
+            this.total = ret.total
+            this.$message({ message: "查询成功", type: "success" })
+          })
+          .catch(error => {
+            this.$message.error("查询失败")
+          });
+      } else {
+        // 管理员可以搜索所有学生
+        this.$axios
+          .get("/student/search/" + this.keyword)
+          .then(res => {
+            let ret = res.data.data
+            this.enrichStudentData(ret.records)
+            this.total = ret.total
+            this.$message({ message: "查询成功", type: "success" })
+          })
+          .catch(error => {
+            this.$message.error("查询失败")
+          });
+      }
     },
 
     // 打开日志查看

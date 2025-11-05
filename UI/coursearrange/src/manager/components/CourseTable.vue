@@ -764,20 +764,24 @@ export default {
           return;
         }
         
-        // 教师角色的逻辑
-        const userInfo = JSON.parse(localStorage.getItem('user'));
-        let url = '/student/students/1';
-        
-        // 如果是教师角色，只加载自己的学生
-        if (userInfo && userInfo.userType === 2) {
-          url = `/teacher/students/${userInfo.id}/1`;
-        }
-        
-        const res = await this.$axios.get(url);
-        if (res.data.code === 0) {
-          this.studentList = res.data.data.records || res.data.data || [];
-          // 丰富学生数据，添加教师名称
-          this.enrichStudentData();
+        // 教师角色的逻辑 - 使用已经在checkUserRole中设置的currentTeacher
+        if (this.currentTeacher) {
+          // 只加载当前教师的学生
+          const url = `/teacher/students/${this.currentTeacher.id}/1`;
+          const res = await this.$axios.get(url);
+          if (res.data.code === 0) {
+            this.studentList = res.data.data.records || res.data.data || [];
+            // 丰富学生数据，添加教师名称
+            this.enrichStudentData();
+          }
+        } else {
+          // 如果不是教师也不是学生，可能是管理员，加载所有学生
+          const res = await this.$axios.get('/student/students/1');
+          if (res.data.code === 0) {
+            this.studentList = res.data.data.records || res.data.data || [];
+            // 丰富学生数据，添加教师名称
+            this.enrichStudentData();
+          }
         }
       } catch (error) {
         this.$message.error('加载学生列表失败');

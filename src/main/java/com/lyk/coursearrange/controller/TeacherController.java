@@ -11,6 +11,7 @@ import com.lyk.coursearrange.entity.Teacher;
 import com.lyk.coursearrange.entity.request.PasswordVO;
 import com.lyk.coursearrange.entity.request.TeacherAddRequest;
 import com.lyk.coursearrange.entity.request.UserLoginRequest;
+import com.lyk.coursearrange.entity.request.StudentRegisterRequest;
 import com.lyk.coursearrange.service.StudentService;
 import com.lyk.coursearrange.service.TeacherService;
 import com.lyk.coursearrange.service.impl.TokenService;
@@ -73,6 +74,36 @@ public class TeacherController {
         }
         // 否则一律视为密码错误
         return ServerResponse.ofError("密码错误");
+    }
+
+    /**
+     * 教师注册（简化版）
+     * @param req
+     * @return
+     */
+    @PassToken
+    @PostMapping("/register")
+    public ServerResponse teacherRegister(@RequestBody StudentRegisterRequest req) {
+        System.out.println(req);
+        
+        // 检查账号是否已存在
+        QueryWrapper<Teacher> wrapper = new QueryWrapper<Teacher>().eq("username", req.getUsername());
+        Teacher existTeacher = teacherService.getOne(wrapper);
+        if (existTeacher != null) {
+            return ServerResponse.ofError("账号已存在，请更换账号");
+        }
+        
+        Teacher teacher = new Teacher();
+        teacher.setUsername(req.getUsername());
+        teacher.setPassword(req.getPassword());
+        teacher.setUserType(2); // 教师类型为2
+        teacher.setStatus(0); // 默认状态为正常
+        
+        boolean b = teacherService.save(teacher);
+        if (b) {
+            return ServerResponse.ofSuccess("注册成功", teacher);
+        }
+        return ServerResponse.ofError("注册失败!");
     }
 
     /**
