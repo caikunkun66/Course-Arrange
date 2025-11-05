@@ -102,7 +102,7 @@ export default {
     
     registerNo() {
       // 跳转到注册页面
-      window.location.href="http://localhost:8081/#/student/register"
+      this.$router.push('/student/register')
     },
     
     login() {
