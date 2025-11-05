@@ -114,7 +114,7 @@
         <span><i class="el-icon-setting"></i> 快捷操作</span>
       </div>
       <div class="action-buttons">
-        <el-button type="primary" icon="el-icon-s-marketing" @click="handleViewSchedule">
+        <el-button type="primary" icon="el-icon-date" @click="handleViewSchedule">
           查看课表
         </el-button>
         <el-button v-if="!studentInfo.teacherId" type="danger" icon="el-icon-user-solid" @click="handleClaimTeacher">

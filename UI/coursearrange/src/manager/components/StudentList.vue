@@ -21,7 +21,7 @@
     <!-- 统计信息 -->
     <div class="statistics-bar">
       <div class="stat-item">
-        <i class="el-icon-user-solid"></i>
+        <i class="el-icon-s-custom"></i>
         <span class="stat-label">学生总数</span>
         <span class="stat-value">{{ total }}</span>
         <span class="stat-unit">人</span>

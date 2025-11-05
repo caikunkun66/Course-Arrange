@@ -9,6 +9,7 @@ import CourseTable from '@/manager/components/CourseTable';
 import StudentCenter from '@/home/components/StudentCenter';
 import StudentPassword from '@/home/components/Password';
 import StudentList from '@/manager/components/StudentList';
+import TeacherCenter from '@/manager/components/TeacherCenter';
 import UpdatePass from '@/pages/components/UpdatePass';
 import StudentMain from '@/home/StudentMain';
 
@@ -97,6 +98,11 @@ const router = new Router({
           path: '/studentlist',
           name: 'StudentList',
           component: StudentList
+        },
+        {
+          path: '/teachercenter',
+          name: 'TeacherCenter',
+          component: TeacherCenter
         }
       ]
     }

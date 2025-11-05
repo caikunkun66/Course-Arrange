@@ -23,13 +23,18 @@
           <!-- 默认展开的索引default-active -->
           <el-menu :default-active="default_active" @select="handleSelect" unique-opened router>
             <el-menu-item index="/coursetable">
-              <i class="el-icon-s-data"></i>
+              <i class="el-icon-date"></i>
               <span slot="title">我的课表</span>
             </el-menu-item>
 
             <el-menu-item index="/studentlist">
-              <i class="el-icon-user"></i>
+              <i class="el-icon-s-custom"></i>
               <span slot="title">学生管理</span>
+            </el-menu-item>
+
+            <el-menu-item v-if="isTeacher" index="/teachercenter">
+              <i class="el-icon-user"></i>
+              <span slot="title">个人中心</span>
             </el-menu-item>
           </el-menu>
         </el-aside>
@@ -79,6 +84,12 @@ export default {
       }
     }
   },
+  watch: {
+    // 监听路由变化，更新菜单选中状态
+    '$route'(to) {
+      this.default_active = to.path;
+    }
+  },
 
   methods: {
     // 下拉菜单功能，退出、个人中心
@@ -92,6 +103,9 @@ export default {
         this.$router.push('/')
       } else if (command == 'center') {
         // 跳转到个人中心
+        if (this.isTeacher) {
+          this.$router.push('/teachercenter')
+        }
       } else if (command == 'updatePassword') {
         // 修改密码页面
         this.$router.push('/updatepass')

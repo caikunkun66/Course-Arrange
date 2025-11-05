@@ -26,7 +26,7 @@
           <el-menu :default-active="default_active" @select="handleSelect" unique-opened>
             <el-menu-item index="/courseList">
               <template slot="title">
-                <i class="el-icon-s-marketing"></i>
+                <i class="el-icon-date"></i>
                 <span slot="title">课程表</span>
               </template>
             </el-menu-item>
@@ -75,6 +75,15 @@ export default {
     let student = window.localStorage.getItem("student")
     if (student != null) {
       this.name = JSON.parse(student).username
+    }
+
+    // 初始化菜单选中状态
+    this.default_active = this.$route.path;
+  },
+  watch: {
+    // 监听路由变化，更新菜单选中状态
+    '$route'(to) {
+      this.default_active = to.path;
     }
   },
 
