@@ -3,7 +3,6 @@
     <!-- 功能 -->
     <div class="header-menu">
       <el-input placeholder="搜索学生" v-model="keyword" @clear="inputListener" clearable style="max-width: 400px;">
-        <el-button slot="append" type="primary" icon="el-icon-search" @click="searchStudent">搜索</el-button>
       </el-input>
       <!-- 管理员可以按教师筛选 -->
       <el-select v-if="isAdmin" v-model="value3" placeholder="教师" @change="queryStudentByTeacher" @clear="teacherListener" clearable>
@@ -14,6 +13,7 @@
           :value="item.value"
         ></el-option>
       </el-select>
+      <el-button slot="append" type="primary" icon="el-icon-search" @click="searchStudent">搜索</el-button>
       <!-- 添加学生按钮 -->
       <el-button class="add-student-btn" type="primary" icon="el-icon-plus" @click="openAddDialog">添加学生</el-button>
     </div>
