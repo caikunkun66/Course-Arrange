@@ -17,6 +17,9 @@
             </el-dropdown-menu>
           </el-dropdown>您好，
           <span>{{name}}</span>
+          <el-avatar :size="36" :src="userAvatar" class="user-avatar-header">
+            <i class="el-icon-user-solid"></i>
+          </el-avatar>
         </el-header>
       </el-header>
       <el-container>
@@ -63,7 +66,9 @@ export default {
     return {
       time: "",
       default_active: "0",
-      name: "用户名"
+      name: "用户名",
+      userAvatar: '',
+      defaultAvatar: 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
     };
   },
   computed: {},
@@ -74,7 +79,9 @@ export default {
 
     let student = window.localStorage.getItem("student")
     if (student != null) {
-      this.name = JSON.parse(student).username
+      const studentData = JSON.parse(student)
+      this.name = studentData.username
+      this.userAvatar = studentData.avatar || this.defaultAvatar
     }
 
     // 初始化菜单选中状态
@@ -183,6 +190,19 @@ export default {
     font-weight: 600;
     font-size: 15px;
     margin-left: 8px;
+  }
+  
+  .user-avatar-header {
+    margin-left: 12px;
+    vertical-align: middle;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.05);
+      border-color: rgba(255, 255, 255, 0.6);
+    }
   }
 }
 
