@@ -57,8 +57,8 @@
       </el-table-column>
       <el-table-column prop="classDuration" label="课程时长" width="100" align="center">
         <template slot-scope="scope">
-          <el-tag :type="scope.row.classDuration === 60 ? 'success' : 'primary'" size="small">
-            {{ scope.row.classDuration || 45 }}分钟
+          <el-tag :type="getClassDurationType(scope.row.classDuration)" size="small">
+            {{ scope.row.classDuration || 45 }}分钟{{ scope.row.classDuration === 30 ? '' : '' }}
           </el-tag>
         </template>
       </el-table-column>
@@ -131,6 +131,7 @@
         </el-form-item>
         <el-form-item label="课程时长" prop="classDuration">
           <el-radio-group v-model="editFormData.classDuration">
+            <el-radio :label="30">30分钟</el-radio>
             <el-radio :label="45">45分钟</el-radio>
             <el-radio :label="60">60分钟</el-radio>
           </el-radio-group>
@@ -202,6 +203,7 @@
         </el-form-item>
         <el-form-item label="课程时长" prop="classDuration">
           <el-radio-group v-model="addFormData.classDuration">
+            <el-radio :label="30">30分钟</el-radio>
             <el-radio :label="45">45分钟</el-radio>
             <el-radio :label="60">60分钟</el-radio>
           </el-radio-group>
@@ -465,6 +467,13 @@ export default {
       if (percentage >= 70) return '#E6A23C' // 橙色 - 用了大部分
       if (percentage >= 30) return '#409EFF' // 蓝色 - 正常使用中
       return '#67C23A' // 绿色 - 刚开始
+    },
+
+    // 根据课程时长返回标签类型
+    getClassDurationType(duration) {
+      if (duration === 30) return 'warning' // 试听课 - 橙色
+      if (duration === 60) return 'success' // 60分钟 - 绿色
+      return 'primary' // 45分钟 - 蓝色（默认）
     },
     
     // 打开添加学生对话框

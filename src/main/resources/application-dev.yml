@@ -10,13 +10,19 @@ spring:
     druid:
       initial-size: 1
       min-idle: 1
-      max-active: 5
-      max-wait: 3000
+      max-active: 10
+      max-wait: 60000
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 300000
       validation-query: SELECT 1
-      test-on-borrow: true
-      test-while-idle: false
+      test-while-idle: true
+      test-on-borrow: false
       test-on-return: false
-      fail-fast: true
+      pool-prepared-statements: true
+      max-pool-prepared-statement-per-connection-size: 20
+      fail-fast: false
+      break-after-acquire-failure: false
+      connection-error-retry-attempts: 3
   # 返回json的全局时间格式
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
