@@ -1,0 +1,10 @@
+.git
+.idea
+.vscode
+target
+**/node_modules
+**/dist
+logs
+uploads
+**/*.iml
+agent-transcripts
