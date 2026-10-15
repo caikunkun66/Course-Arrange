@@ -196,7 +196,15 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
   margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .course-manage {
+    padding: 8px 0;
+  }
 }
 
 .page-title {

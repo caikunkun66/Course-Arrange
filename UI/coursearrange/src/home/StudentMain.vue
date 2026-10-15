@@ -3,12 +3,14 @@
   <!-- 学生点击修改密码，跳转到updatepass.vue与其他用户共用一个组件 -->
   <!-- 学生登录之后默认进入查看课表页面 -->
   <!-- 点击学生右上角的个人中心跳转到一个页面展示个人信息，上方放一个按钮加入班级，一个修改信息 -->
-  <div class="wrapper">
+  <div class="wrapper app-shell">
     <el-container>
       <el-header>
-        <!-- 头 -->
-        <el-header style="text-align: right; font-size: 12px">
-          <!-- 系统标题 -->
+        <el-header class="app-topbar" style="text-align: right; font-size: 12px">
+          <button type="button" class="menu-toggle" @click="menuOpen = !menuOpen" aria-label="菜单">
+            <i :class="menuOpen ? 'el-icon-close' : 'el-icon-s-fold'"></i>
+          </button>
+          <div class="header-user">
           <el-dropdown @command="handleCommand">
             <i class="el-icon-setting" style="margin-right: 15px"></i>
             <el-dropdown-menu slot="dropdown">
@@ -20,10 +22,12 @@
           <el-avatar :size="36" :src="userAvatar" class="user-avatar-header">
             <i class="el-icon-user-solid"></i>
           </el-avatar>
+          </div>
         </el-header>
       </el-header>
+      <div v-show="menuOpen" class="menu-mask" @click="menuOpen = false"></div>
       <el-container>
-        <el-aside width="200px">
+        <el-aside width="200px" :class="{ 'menu-open': menuOpen }">
           <!-- 侧边 -->
           <!-- 默认展开的索引default-active -->
           <el-menu :default-active="default_active" @select="handleSelect" unique-opened>
@@ -68,7 +72,8 @@ export default {
       default_active: "0",
       name: "用户名",
       userAvatar: '',
-      defaultAvatar: 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
+      defaultAvatar: 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png',
+      menuOpen: false
     };
   },
   computed: {},
@@ -86,11 +91,13 @@ export default {
 
     // 初始化菜单选中状态
     this.default_active = this.$route.path;
+    window.addEventListener('resize', this.closeMenuOnDesktop);
   },
   watch: {
     // 监听路由变化，更新菜单选中状态
     '$route'(to) {
       this.default_active = to.path;
+      this.menuOpen = false;
     }
   },
 
@@ -116,8 +123,18 @@ export default {
     // 展开一个菜单
     handleSelect(val) {
       this.default_active = val;
+      this.menuOpen = false;
       this.$router.push(val);
+    },
+
+    closeMenuOnDesktop() {
+      if (window.innerWidth > 768) {
+        this.menuOpen = false;
+      }
     }
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.closeMenuOnDesktop);
   }
 };
 </script>

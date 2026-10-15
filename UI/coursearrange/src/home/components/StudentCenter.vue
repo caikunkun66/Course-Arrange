@@ -953,6 +953,7 @@ export default {
   
   .stats-row {
     /deep/ .el-col {
+      width: 100%;
       margin-bottom: 16px;
     }
   }

@@ -71,7 +71,7 @@
           <el-button type="text" size="mini" @click="openLog(scope.row)">查看日志</el-button>
         </template>
       </el-table-column>
-      <el-table-column prop="operation" label="操作" width="280" align="center" fixed="right">
+      <el-table-column prop="operation" label="操作" width="280" align="center" :fixed="narrowScreen ? false : 'right'">
         <template slot-scope="scope">
           <div class="operation-buttons">
             <el-button type="primary" size="mini" @click="editById(scope.$index, scope.row)">编辑</el-button>
@@ -331,6 +331,7 @@ export default {
         studentRemark: ''
       },
       defaultAvatar: 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png',
+      narrowScreen: false,
       uploadUrl: (process.env.API_BASE_URL || '') + '/upload/avatar',
       uploadHeaders: {
         'Authorization': localStorage.getItem('token') || ''
@@ -408,6 +409,8 @@ export default {
   },
 
   mounted() {
+    this.syncNarrowScreen();
+    window.addEventListener('resize', this.syncNarrowScreen);
     // 先拿到教师名单，再查学生。否则学生先返回时，所属教师会被写成「未分配」
     this.loadAllTeachers().finally(() => {
       if (!this.isAdmin && this.currentTeacherId) {
@@ -418,7 +421,15 @@ export default {
     });
   },
 
+  beforeDestroy() {
+    window.removeEventListener('resize', this.syncNarrowScreen);
+  },
+
   methods: {
+    syncNarrowScreen() {
+      this.narrowScreen = window.innerWidth <= 768;
+    },
+
     // 格式化课时显示（支持小数）
     formatHours(hours) {
       if (!hours || hours === 0) return '0';
@@ -1015,6 +1026,23 @@ export default {
 .el-input-group {
   width: 40%;
   min-width: 300px;
+}
+
+@media (max-width: 768px) {
+  .el-input-group,
+  .header-menu /deep/ .el-input,
+  .header-menu /deep/ .el-select {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .header-menu {
+    padding: 12px !important;
+  }
+
+  .header-menu /deep/ .el-button {
+    margin-left: 0;
+  }
 }
 
 .header-menu {

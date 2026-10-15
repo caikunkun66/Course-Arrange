@@ -119,7 +119,7 @@
         
         <el-calendar v-model="calendarValue">
           <template slot="dateCell" slot-scope="{date, data}">
-            <div class="calendar-day">
+            <div class="calendar-day" @click="openDayOnMobile(data.day)">
               <div class="day-number" :class="{'today': isToday(data.day), 'selected-month': isSelectedMonth(data.day)}">
                 <span class="day-text">{{ data.day.split('-').slice(2).join('-') }}</span>
                 <button 
@@ -131,6 +131,7 @@
                   <i class="el-icon-plus"></i>
                 </button>
               </div>
+              <div class="mobile-count" v-if="getDayCourses(data.day).length">{{ getDayCourses(data.day).length }}节</div>
               <div class="day-courses" v-if="getDayCourses(data.day).length > 0">
                 <div
                   v-for="course in getDayCourses(data.day)"
@@ -1242,6 +1243,11 @@ export default {
       this.selectedCourse = course;
       this.detailDialogVisible = true;
     },
+
+    openDayOnMobile(day) {
+      if (window.innerWidth > 768) return;
+      if (this.getDayCourses(day).length) this.showDayCourses(day);
+    },
     
     // 显示某一天的所有课程
     showDayCourses(day) {
@@ -2053,6 +2059,10 @@ export default {
       display: flex;
       flex-direction: column;
       position: relative;
+
+      .mobile-count {
+        display: none;
+      }
       
       &:hover {
         .day-number .add-course-btn {
@@ -2708,6 +2718,36 @@ export default {
       
       /deep/ .el-calendar__header {
         padding: 8px 10px !important;
+      }
+
+      /deep/ .el-calendar-table {
+        table-layout: fixed;
+      }
+
+      /deep/ .el-calendar-table thead th {
+        padding: 6px 0;
+        font-size: 12px;
+      }
+
+      /deep/ .el-calendar-table .el-calendar-day {
+        height: 52px !important;
+        padding: 0 !important;
+      }
+
+      .calendar-day .day-courses,
+      .calendar-day .add-course-btn {
+        display: none !important;
+      }
+
+      .calendar-day .mobile-count {
+        display: inline-flex;
+        margin: 2px 0 0 4px;
+        padding: 0 6px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #4f46e5;
+        font-size: 11px;
+        line-height: 18px;
       }
     }
   }

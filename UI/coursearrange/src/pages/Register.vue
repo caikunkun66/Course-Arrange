@@ -198,6 +198,8 @@ export default {
 
   .register-box {
     width: 450px;
+    max-width: calc(100% - 32px);
+    box-sizing: border-box;
     background-color: #ffffff;
     border-radius: 24px;
     position: relative;
@@ -305,4 +307,12 @@ export default {
       }
     }
   }
+</style>
+
+<style lang="less">
+@media (max-width: 768px) {
+  .register-box {
+    padding: 72px 16px 24px !important;
+  }
+}
 </style>

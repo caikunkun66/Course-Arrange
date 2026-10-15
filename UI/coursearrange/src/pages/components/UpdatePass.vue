@@ -191,6 +191,8 @@ export default {
 
 .update-form {
   width: 500px;
+  max-width: calc(100% - 24px);
+  box-sizing: border-box;
   border: 1px solid #eee;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -205,5 +207,21 @@ export default {
   display: flex;
   margin-left: 400px;
   justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .update-form {
+    width: calc(100% - 24px);
+    margin-top: 180px;
+    position: relative;
+    left: auto;
+    transform: none;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .button {
+    margin-left: 0;
+  }
 }
 </style>

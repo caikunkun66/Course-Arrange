@@ -270,10 +270,145 @@ a:hover {
   animation: fadeIn 0.3s ease-out;
 }
 
+.menu-toggle,
+.menu-mask {
+  display: none;
+}
+
 /* 响应式辅助类 */
 @media (max-width: 768px) {
   :root {
     --spacing-xl: 24px;
     --spacing-2xl: 32px;
+  }
+
+  html, body, #app {
+    overflow-x: hidden;
+  }
+
+  .app-shell .menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    font-size: 20px;
+    z-index: 2;
+  }
+
+  .app-shell .header-user {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
+    padding-left: 48px;
+  }
+
+  .app-shell .el-header {
+    padding: 0 12px;
+  }
+
+  .app-shell .el-main {
+    padding: 12px 8px;
+    min-width: 0;
+  }
+
+  .app-shell .el-footer {
+    line-height: 32px;
+    font-size: 12px;
+    letter-spacing: 0;
+  }
+
+  .app-shell .el-aside {
+    position: fixed !important;
+    top: 60px;
+    bottom: 0;
+    left: 0;
+    z-index: 300;
+    width: 220px !important;
+    max-width: 80vw;
+    transform: translateX(-105%);
+    transition: transform 0.25s ease;
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.12);
+  }
+
+  .app-shell .el-aside.menu-open {
+    transform: translateX(0);
+  }
+
+  .app-shell .menu-mask {
+    display: block;
+    position: fixed;
+    top: 60px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(15, 23, 42, 0.4);
+    z-index: 250;
+  }
+
+  .el-dialog {
+    width: 92vw !important;
+    max-width: 92vw;
+    margin-top: 4vh !important;
+  }
+
+  .el-dialog__body {
+    padding: 14px 12px !important;
+    max-height: 68vh;
+    overflow-y: auto;
+  }
+
+  .el-dialog__footer {
+    padding: 10px 12px 14px !important;
+  }
+
+  .el-message-box {
+    width: 90vw !important;
+  }
+
+  .el-form-item__label {
+    float: none !important;
+    display: block !important;
+    width: auto !important;
+    text-align: left !important;
+    line-height: 1.4 !important;
+    padding: 0 0 6px !important;
+  }
+
+  .el-form-item__content {
+    margin-left: 0 !important;
+  }
+
+  .el-col-6,
+  .el-col-8,
+  .el-col-12 {
+    width: 100% !important;
+  }
+
+  .el-date-editor.el-input,
+  .el-date-editor.el-input__inner,
+  .el-select,
+  .el-cascader {
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  .el-pagination {
+    white-space: normal;
+    padding: 8px 0;
+  }
+
+  .el-pagination .el-pagination__sizes,
+  .el-pagination .el-pagination__jump {
+    display: none;
   }
 }

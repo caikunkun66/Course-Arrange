@@ -73,7 +73,16 @@ export default {
 <style lang="less">
 .s-center {
   width: 500px;
+  max-width: 100%;
+  box-sizing: border-box;
   text-align: left;
   padding: 30px;
+}
+
+@media (max-width: 768px) {
+  .s-center {
+    width: 100%;
+    padding: 16px 8px;
+  }
 }
 </style>
